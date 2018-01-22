@@ -83,7 +83,9 @@ MultiNightBar::~MultiNightBar(){
 }
 
 // Sets numFixedAgents to not Learning
-// This is to be used for testing fixed number of nonlearning agents
+// This is to be used for testing fixed number of non-learning agents
+// Usage: run fixAgents(num agents to fix) after initializing the MultiNightBar
+// class with runType flag = 1
 void MultiNightBar::fixAgents(int numFixedAgents){
     for (int i = 0; i < numFixedAgents; ++i)
     {
@@ -92,7 +94,7 @@ void MultiNightBar::fixAgents(int numFixedAgents){
 }
 
 // Simulates a single epoch
-void MultiNightBar::simulateEpoch(int epochNumber, double learnProb=0.0){
+void MultiNightBar::simulateEpoch(int epochNumber, double learnProb){
     switch(runType){
         case 1: simulateEpochFixed(epochNumber);
                 break;
@@ -105,6 +107,9 @@ void MultiNightBar::simulateEpoch(int epochNumber, double learnProb=0.0){
 
 // Simulates a single epoch: fixed agent learning
 void MultiNightBar::simulateEpochFixed(int epochNumber){
+
+    std::cout << "Simulating Epoch " << epochNumber << std::endl;
+
     // poll each agent for an action (get previous action for paused agent)
     std::vector<int> actions = getActions();
 
@@ -147,6 +152,21 @@ void MultiNightBar::simulateEpochFixed(int epochNumber){
 
     // log the actions of each agent
     logAgentActions(actions);
+
+    // log the attendance
+    logAttendance(attendance);
+
+
+    std::cout << "Global Reward = " << G << std::endl;
+
+    std::cout << "Attendance = "; 
+    std::cout << attendance[0];
+
+    for (int i = 1; i < numNights; ++i){
+        std::cout << ", " << attendance[i];
+    }
+
+    std::cout << "\n\n";
 
 }
 
@@ -205,7 +225,7 @@ void MultiNightBar::simulateEpochImpact(int epochNumber){
     }
 
     // Logs the number of agents learning at each epoch
-    logNumLearning(epochNumber);
+    int numLearning = logNumLearning(epochNumber);
 
     // Log the performance at each epoch
     logPerformance(epochNumber, G);
@@ -216,6 +236,18 @@ void MultiNightBar::simulateEpochImpact(int epochNumber){
     // log the actions of each agent
     logAgentActions(actions);
 
+    std::cout << "Global Reward = " << G << std::endl;
+
+    std::cout << "NumLearning = " << numLearning << std::endl;
+
+    std::cout << "Attendance = "; 
+    std::cout << attendance[0];
+
+    for (int i = 1; i < numNights; ++i){
+        std::cout << ", " << attendance[i];
+    }
+
+    std::cout << "\n";
 
 }
 
@@ -350,6 +382,7 @@ double MultiNightBar::computeG(const std::vector<double>& rewardPerNight){
 std::vector<double> MultiNightBar::computeD(const std::vector<int>& actions, std::vector<int> attendance){
 
     std::vector<double> D(numAgents, 0);
+    // std::cout << "D = ";
 
     for (int i = 0; i < numAgents; ++i){
 
@@ -361,7 +394,9 @@ std::vector<double> MultiNightBar::computeD(const std::vector<int>& actions, std
 
         // Suppose agent i did not attend that night, compute the difference in reward
         D[i] = computeRewardSingle(numAttend) - computeRewardSingle(numAttend-1);
+        // std::cout << D[i]<< ", ";
     }
+    // std::cout << "\n";
 
     return D;
 }
@@ -505,11 +540,11 @@ void MultiNightBar::setupLoggers(){
     agentActionFile.open(logPath+"agentActions.csv");
     qTableFile.open(logPath+"qTable.csv");
     readmeFile.open(logPath+"readme.txt");
-    finalActionFile.open(logPath+"finalActions.csv");
+    attendanceFile.open(logPath+"attendance.csv");
 }
 
 // Logs the number of agents learning at each epoch
-void MultiNightBar::logNumLearning(int epochNumber){
+int MultiNightBar::logNumLearning(int epochNumber){
 
     int numLearning = 0;
 
@@ -519,6 +554,8 @@ void MultiNightBar::logNumLearning(int epochNumber){
     }
 
     numLearningFile << epochNumber << ", " << numLearning << "\n";
+
+    return numLearning;
 }
 
 // Log the performance at each epoch
@@ -571,16 +608,16 @@ void MultiNightBar::logQTables(){
     }
 }
 
-// TODO update previous actions so that this works
-void MultiNightBar::logFinalActions(){
+// log the attendance of each night
+void MultiNightBar::logAttendance(std::vector<int> attendance){
 
-    // finalActionFile << prevActions[0];
+    attendanceFile << attendance[0];
 
-    // for (int i = 1; i < numAgents; ++i){
-    //     agentActionFile << ", " << prevActions[i];
-    // }
+    for (int i = 1; i < numNights; ++i){
+        attendanceFile << ", " << attendance[i];
+    }
 
-    // finalActionFile << "\n";
+    attendanceFile << "\n";
 
 }
 
@@ -592,7 +629,7 @@ void MultiNightBar::logReadMe(){
 
     readmeFile << "Run Type: " << runType << "\n";
 
-    readmeFile << "Inv Temp: " << invTemp << "\n";
+    readmeFile << "Temp: " << 1.0/invTemp << "\n";
 
     readmeFile << "Learning Using D?: " << learningD << "\n";
     readmeFile << "Impact Calculate Using D?: " << impactD << "\n";

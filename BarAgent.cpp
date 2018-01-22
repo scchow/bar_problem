@@ -91,9 +91,10 @@ int BarAgent::getBestAction(){
 
 // updates the q table for a given action, reward pair
 // Also updates the recorded change in Q (ie. deltaPi)
+// Note: Since we are using a single state problem, no discount factor.
 void BarAgent::updateQTable(int action, double reward){
 
-    double newQ = ((1-alpha) * Q[action]) + (alpha * reward);
+    double newQ = ((1.0-alpha) * Q[action]) + (alpha * reward);
     deltaPi = std::abs(newQ - Q[action]);
     Q[action] = newQ;
 }

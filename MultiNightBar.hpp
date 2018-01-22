@@ -40,7 +40,7 @@ public:
     void fixAgents(int numFixedAgents);
 
     // Simulates a single epoch
-    void simulateEpoch(int epochNumber, double learnProb);
+    void simulateEpoch(int epochNumber, double learnProb = 0.0);
 
     // Simulates a single epoch: fixed agent learning
     void simulateEpochFixed(int epochNumber);
@@ -112,8 +112,8 @@ public:
     // creates ofstreams for each of the loggers based on the string path provided
     void setupLoggers();
 
-    // Logs the number of agents learning at each epoch
-    void logNumLearning(int epochNumber);
+    // Logs and return the number of agents learning at each epoch 
+    int logNumLearning(int epochNumber);
 
     // Log the performance at each epoch
     void logPerformance(int epochNumber, double G);
@@ -131,7 +131,7 @@ public:
     void logReadMe();
 
     // Log the final actions
-    void logFinalActions();
+    void logAttendance(std::vector<int> attendance);
 
 private:
 
@@ -204,7 +204,7 @@ private:
     std::ofstream agentActionFile;
     std::ofstream qTableFile;
     std::ofstream readmeFile;
-    std::ofstream finalActionFile;
+    std::ofstream attendanceFile;
 
 
 };
