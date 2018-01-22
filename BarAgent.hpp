@@ -49,6 +49,9 @@ public:
     // returns how much the policy has changed
     double getDeltaPi();
 
+    // returns the Q-Table
+    std::vector<double> getQTable();
+
 
 private:
 

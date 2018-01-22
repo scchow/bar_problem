@@ -1,11 +1,15 @@
 #include "MultiNightBar.hpp"
+
+int debug = 5;
+
 // Constructor
-MultiNightBar::MultiNightBar(int nAgents, int nNights, int cap, double tau,
+MultiNightBar::MultiNightBar(int nAgents, int nNights, int cap, int runFlag, double tau,
                              bool learnTypeD, bool impactTypeD,
-                             double learningRate, double exploration):
-                             numAgents(nAgents), numNights(nNights), capacity(cap),
-                             learningD(learnTypeD), impactD(impactTypeD),
-                             alpha(learningRate), epsilon(exploration)
+                             double learningRate, double exploration,
+                             std::string path):
+                             numAgents(nAgents), numNights(nNights), capacity(cap), runType(runFlag),
+                             learningD(learnTypeD), impactD(impactTypeD), 
+                             alpha(learningRate), epsilon(exploration), logPath(path)
 {
     // save temperature as inverse to save computation
     invTemp = 1/tau;
@@ -46,19 +50,61 @@ MultiNightBar::MultiNightBar(int nAgents, int nNights, int cap, double tau,
     else{
         useD = false;
     }
+
+
+    // make directory if it does not exist
+    std::string mkdir = "mkdir -p " + path;
+    system(mkdir.c_str());
+
+    // setup logging files
+    setupLoggers();
+
+    // make a README file
+    logReadMe();
+
 }
 
 // Destructor
 MultiNightBar::~MultiNightBar(){
+    // deallocate all the agents
     for (int i = 0; i < numAgents; ++i){
         delete agentVec[i];
         agentVec[i] = nullptr;
     }
+
+    // close the ofstreams
+    numLearningFile.close();
+    performanceFile.close();
+    // finalActionFile.close();
+    agentActionFile.close();
+    qTableFile.close();
+    readmeFile.close();
+
+}
+
+// Sets numFixedAgents to not Learning
+// This is to be used for testing fixed number of nonlearning agents
+void MultiNightBar::fixAgents(int numFixedAgents){
+    for (int i = 0; i < numFixedAgents; ++i)
+    {
+        learningStatus[i] = false;
+    }
 }
 
 // Simulates a single epoch
-void MultiNightBar::simulateEpoch(int epochNumber){
+void MultiNightBar::simulateEpoch(int epochNumber, double learnProb=0.0){
+    switch(runType){
+        case 1: simulateEpochFixed(epochNumber);
+                break;
+        case 2: simulateEpochImpact(epochNumber);
+                break;
+        case 3: simulateEpochRandom(epochNumber, learnProb);
+                break;
+    }
+}
 
+// Simulates a single epoch: fixed agent learning
+void MultiNightBar::simulateEpochFixed(int epochNumber){
     // poll each agent for an action (get previous action for paused agent)
     std::vector<int> actions = getActions();
 
@@ -71,6 +117,53 @@ void MultiNightBar::simulateEpoch(int epochNumber){
     // compute global reward
     double G = computeG(rewardPerNight);
 
+    // if necessary compute D
+    std::vector<double> D;
+    if (useD){
+        D = computeD(actions, attendance);
+        // std::cout << "D:";
+        // for (int i = 0; i < D.size(); ++i){
+        //     std::cout << D[i] << ",";
+        // }
+        // std::cout << "\n";
+    }
+
+    // update Q tables of learning agents
+    if (learningD){
+        updateQTables(actions, D);
+    }
+    else{
+        updateQTables(actions, G);
+    }
+
+    // Logs the number of agents learning at each epoch
+    logNumLearning(epochNumber);
+
+    // Log the performance at each epoch
+    logPerformance(epochNumber, G);
+
+    // Log the learning of each agent
+    logLearningStatus();
+
+    // log the actions of each agent
+    logAgentActions(actions);
+
+}
+
+// Simulates a single epoch: agent learning based on impact
+void MultiNightBar::simulateEpochImpact(int epochNumber){
+
+    // poll each agent for an action (get previous action for paused agent)
+    std::vector<int> actions = getActions();
+
+    // compute the attendance
+    std::vector<int> attendance = computeAttendance(actions);
+
+    // compute reward per night
+    std::vector<double> rewardPerNight = computeRewardMulti(attendance);
+
+    // compute global reward
+    double G = computeG(rewardPerNight);
 
     // if necessary compute D
     std::vector<double> D;
@@ -94,7 +187,65 @@ void MultiNightBar::simulateEpoch(int epochNumber){
     std::vector<bool> newLearningStatus = computeLearningStatus(probLearning);
 
     // set the learning status of agents, recording impact and action for fixed learners
-    setLearningStatus(newLearningStatus, attendance, impacts);
+    setLearningStatus(newLearningStatus, actions, impacts);
+
+    // update Q tables of learning agents
+    if (learningD){
+        updateQTables(actions, D);
+    }
+    else{
+        updateQTables(actions, G);
+    }
+
+    // save G and/or D for future impact calculation
+    updatePrevG(G);
+
+    if (useD){
+        updatePrevD(D);
+    }
+
+    // Logs the number of agents learning at each epoch
+    logNumLearning(epochNumber);
+
+    // Log the performance at each epoch
+    logPerformance(epochNumber, G);
+
+    // Log the learning of each agent
+    logLearningStatus();
+
+    // log the actions of each agent
+    logAgentActions(actions);
+
+
+}
+
+// Simulates a single epoch: agent learning based on random prob
+void MultiNightBar::simulateEpochRandom(int epochNumber, double learnProb){
+
+    // poll each agent for an action (get previous action for paused agent)
+    std::vector<int> actions = getActions();
+
+    // compute the attendance
+    std::vector<int> attendance = computeAttendance(actions);
+
+    // compute reward per night
+    std::vector<double> rewardPerNight = computeRewardMulti(attendance);
+
+    // compute global reward
+    double G = computeG(rewardPerNight);
+
+    // if necessary compute D
+    std::vector<double> D;
+    if (useD){
+        D = computeD(actions, attendance);
+    }
+
+    // the probability of each agent learning is fixed by learnProb
+    std::vector<double> probLearning(numAgents, learnProb);
+
+    // compute learning status of the agents via probability
+    // and directly set without considering other impact
+    learningStatus = computeLearningStatus(probLearning);
 
     // update Q tables of learning agents
     if (learningD){
@@ -167,7 +318,7 @@ std::vector<int> MultiNightBar::computeAttendance(std::vector<int> actions){
 // Computes the reward for a single night
 double MultiNightBar::computeRewardSingle(int numAttend){
 
-    return (double)capacity * exp(-0.1 * pow((double)numAttend - (double)capacity,2));
+    return (double)capacity * std::exp(-0.1 * std::pow((double)numAttend - (double)capacity,2));
 }
 
 // Computes the rewards for all nights based on attendance
@@ -344,3 +495,115 @@ void MultiNightBar::updatePrevG(double newG){
 int MultiNightBar::constInvTemp(int epochNumber){
     return invTemp;
 }
+
+
+// creates ofstreams for each of the loggers based on the string path provided
+void MultiNightBar::setupLoggers(){
+    numLearningFile.open(logPath+"numLearning.csv");
+    performanceFile.open(logPath+"performance.csv");
+    learningStatusFile.open(logPath+"learningStatus.csv");
+    agentActionFile.open(logPath+"agentActions.csv");
+    qTableFile.open(logPath+"qTable.csv");
+    readmeFile.open(logPath+"readme.txt");
+    finalActionFile.open(logPath+"finalActions.csv");
+}
+
+// Logs the number of agents learning at each epoch
+void MultiNightBar::logNumLearning(int epochNumber){
+
+    int numLearning = 0;
+
+    for (int i = 0; i < numAgents; ++i)
+    {
+        numLearning += learningStatus[i];
+    }
+
+    numLearningFile << epochNumber << ", " << numLearning << "\n";
+}
+
+// Log the performance at each epoch
+void MultiNightBar::logPerformance(int epochNumber, double G){
+
+    performanceFile << epochNumber << ", " << G << "\n";
+
+}
+
+// Log the learning of each agent
+void MultiNightBar::logLearningStatus(){
+    
+    learningStatusFile << learningStatus[0];
+
+    for (int i = 1; i < numAgents; ++i){
+        learningStatusFile << ", " << learningStatus[i];
+    }
+
+    learningStatusFile << "\n";
+}
+
+// log the actions of each agent
+void MultiNightBar::logAgentActions(std::vector<int>& actions){
+
+    agentActionFile << actions[0];
+
+    for (int i = 1; i < numAgents; ++i){
+        agentActionFile << ", " << actions[i];
+    }
+
+    agentActionFile << "\n";
+
+}
+
+// log the final q table values of each agent
+void MultiNightBar::logQTables(){
+
+    for (int i = 0; i < numAgents; ++i){
+
+        std::vector<double> qTable = agentVec[i]->getQTable();
+
+        qTableFile << qTable[0];
+
+        for (size_t i = 1; i < qTable.size(); ++i)
+        {
+            qTableFile << ", " << qTable[i];
+        }
+
+        qTableFile << "\n";
+    }
+}
+
+// TODO update previous actions so that this works
+void MultiNightBar::logFinalActions(){
+
+    // finalActionFile << prevActions[0];
+
+    // for (int i = 1; i < numAgents; ++i){
+    //     agentActionFile << ", " << prevActions[i];
+    // }
+
+    // finalActionFile << "\n";
+
+}
+
+// Log the run parameters in this readme
+void MultiNightBar::logReadMe(){
+    readmeFile << "Num Agents: " << numAgents << "\n";
+    readmeFile << "Num Nights: " << numNights << "\n";
+    readmeFile << "Capacity: " << capacity << "\n";
+
+    readmeFile << "Run Type: " << runType << "\n";
+
+    readmeFile << "Inv Temp: " << invTemp << "\n";
+
+    readmeFile << "Learning Using D?: " << learningD << "\n";
+    readmeFile << "Impact Calculate Using D?: " << impactD << "\n";
+
+    // flag for computing D
+    readmeFile << "Using D: " << useD << "\n";
+
+    /* Agent Params */
+
+    readmeFile << "Learning Rate: " << alpha << "\n";
+    // default exploration rate for the agents
+    readmeFile << "Exploration Rate: " << epsilon << "\n";
+}
+

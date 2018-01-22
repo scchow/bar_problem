@@ -112,3 +112,7 @@ void BarAgent::setExploration(double exploration){
 double BarAgent::getDeltaPi(){
     return deltaPi;
 }
+
+std::vector<double> BarAgent::getQTable(){
+    return Q;
+}

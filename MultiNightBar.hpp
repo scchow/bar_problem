@@ -8,28 +8,48 @@
 #include <cmath>  // for exp, abs functions
 #include <limits> // for infinity
 
+#include <boost/lexical_cast.hpp>
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
 
 #include <stddef.h> // for int
+#include <experimental/filesystem>
 
 
 #include "BarAgent.hpp"
+
+namespace fs = std::experimental::filesystem;
+
 
 class MultiNightBar
 {
 public:
     // Constructor
-    MultiNightBar(int nAgents, int nNights, int cap, double tau, 
+    MultiNightBar(int nAgents, int nNights, int cap, int runFlag, double tau, 
                     bool learnTypeD, bool impactTypeD, 
-                    double learningRate, double exploration);
+                    double learningRate, double exploration,
+                    std::string path);
 
     // Destructor
     ~MultiNightBar();
 
+    // Sets numFixedAgents to not Learning
+    // This is to be used for testing fixed number of non-learning agents
+    void fixAgents(int numFixedAgents);
+
     // Simulates a single epoch
-    void simulateEpoch(int epochNumber);
+    void simulateEpoch(int epochNumber, double learnProb);
+
+    // Simulates a single epoch: fixed agent learning
+    void simulateEpochFixed(int epochNumber);
+
+    // Simulates a single epoch: agent learning based on impact
+    void simulateEpochImpact(int epochNumber);
+
+    // Simulates a single epoch: agent learning based on random prob
+    void simulateEpochRandom(int epochNumber, double learnProb);
 
     // Polls each agent for an action. Uses the default exploration rate.
     // For fixed agents, the previous action taken by that agent is used
@@ -89,6 +109,30 @@ public:
     // constant temperature function - returns the inverse of temperature value to save computation
     int constInvTemp(int epochNumber);
 
+    // creates ofstreams for each of the loggers based on the string path provided
+    void setupLoggers();
+
+    // Logs the number of agents learning at each epoch
+    void logNumLearning(int epochNumber);
+
+    // Log the performance at each epoch
+    void logPerformance(int epochNumber, double G);
+
+    // Log the learning of each agent
+    void logLearningStatus();
+
+    // log the actions of each agent
+    void logAgentActions(std::vector<int>& actions);
+
+    // log the final q table values of each agent
+    void logQTables();
+
+    // Log the run parameters in this readme
+    void logReadMe();
+
+    // Log the final actions
+    void logFinalActions();
+
 private:
 
     /* Bar Domain Parameters */
@@ -99,6 +143,12 @@ private:
     int numNights;
     // capacity of each night
     int capacity;
+
+    // Type of Run
+    // 1 - Fixed agent
+    // 2 - Impact Calculation
+    // 3 - Random - with probability passed into simulateEpoch
+    int runType;
 
     // inverse of tau - temperature value
     double invTemp;
@@ -115,9 +165,9 @@ private:
     /* Agent Params */
 
     // default learning rate for the agents
-    int alpha;
+    double alpha;
     // default exploration rate for the agents
-    int epsilon;
+    double epsilon;
     // vector of Q-Learning Bar Agent Pointers
     std::vector<BarAgent*> agentVec;
     // learning status vector - bool vector, 0 = nonlearning, 1 = learning
@@ -128,7 +178,7 @@ private:
     std::vector<double> prevImpacts;
 
 
-    /* Vars for memory of previous runs for impact/nonlearning agents */
+    /* Vars for memory of previous runs for impact/non-learning agents */
 
     // previous G
     double prevG;
@@ -140,14 +190,36 @@ private:
 
     // random seed - c++ makes a "random seed" somehow
     std::random_device rd;
-
     // Random Number Generator initialized with seed from rd
     std::mt19937_64 generator{rd()}; 
-
     // Random number distribution from 0 to 1
     std::uniform_real_distribution<> distReal{0.0, 1.0}; 
 
     
+    /* Log variables */
+    std::string logPath;
+    std::ofstream numLearningFile;
+    std::ofstream performanceFile;
+    std::ofstream learningStatusFile;
+    std::ofstream agentActionFile;
+    std::ofstream qTableFile;
+    std::ofstream readmeFile;
+    std::ofstream finalActionFile;
+
+
 };
+
+// template <class T>
+// std::string printVector(std::vector<T> v){
+
+//     std::string output = boost::lexical_cast<std::string>(v[0]);
+
+//     for (int i = 1; i < v.size(); ++i){
+//         output += ", " + boost::lexical_cast<std::string>(*i);
+//     }
+//     output += "\n";
+
+//     return output;
+// }
 
 #endif // MULTI_NIGHT_BAR_H_
