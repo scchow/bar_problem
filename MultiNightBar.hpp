@@ -8,11 +8,13 @@
 #include <cmath>  // for exp, abs functions
 #include <limits> // for infinity
 
-#include <boost/lexical_cast.hpp>
+// #include <boost/lexical_cast.hpp>
 
 #include <iostream>
-#include <fstream>
-#include <sstream>
+// #include <fstream>
+// #include <sstream>
+
+#include <assert.h>
 
 #include <stddef.h> // for int
 // #include <experimental/filesystem>
@@ -61,7 +63,7 @@ public:
     std::vector<int> getActions(double exploration);
 
     // Computes the attendance given a vector of agent actions
-    std::vector<int> computeAttendance(std::vector<int> actions);
+    std::vector<int> computeAttendance(const std::vector<int>& actions);
 
     // Computes the reward for a single night
     double computeRewardSingle(int numAttend);
@@ -74,7 +76,7 @@ public:
     double computeG(const std::vector<double>& rewardPerNight);
 
     // Computes the difference reward for each agent based on actions on a particular night
-    std::vector<double> computeD(const std::vector<int>& actions, std::vector<int>& attendance);
+    std::vector<double> computeD(const std::vector<int>& actions, const std::vector<int>& attendance);
 
     // Computes the impact given the global reward for each agent
     // For fixed agents, the previous impact is used
@@ -82,10 +84,10 @@ public:
 
     // Computes the impact given the difference rewards for each agent
     // For fixed agents, the previous impact is used
-    std::vector<double> computeImpacts(std::vector<double>& D);
+    std::vector<double> computeImpacts(const std::vector<double>& D);
 
     // Compute probability of learning based on impact
-    std::vector<double> computeProbLearning(int epochNumber, std::vector<double>& impacts);
+    std::vector<double> computeProbLearning(int epochNumber, const std::vector<double>& impacts);
 
     // Returns a bool vector defining which agents should and should not learn
     std::vector<bool> computeLearningStatus(const std::vector<double>& probLearning);
@@ -95,13 +97,13 @@ public:
     void setLearningStatus(const std::vector<bool>& learningStatus, const std::vector<int>& actions, const std::vector<double>& impacts);
 
     // Updates the Q-Tables of the agents with the same reward (used for Global Reward)
-    void updateQTables(std::vector<int>& actions, double reward);
+    void updateQTables(const std::vector<int>& actions, double reward);
 
     // Updates the Q-Tables of the agents with their personalized reward (used for Difference Rewards)
-    void updateQTables(std::vector<int>& actions, const std::vector<double>& rewards);
+    void updateQTables(const std::vector<int>& actions, const std::vector<double>& rewards);
 
     // Saves the Previous D values for impact calculation
-    void updatePrevD(std::vector<double>& newD);
+    void updatePrevD(const std::vector<double>& newD);
 
     // Saves the previous G value for impact calculations
     void updatePrevG(double newG);
@@ -122,7 +124,7 @@ public:
     void logLearningStatus();
 
     // log the actions of each agent
-    void logAgentActions(std::vector<int>& actions);
+    void logAgentActions(const std::vector<int>& actions);
 
     // log the final q table values of each agent
     void logQTables();
@@ -131,7 +133,7 @@ public:
     void logReadMe();
 
     // Log the final actions
-    void logAttendance(std::vector<int> attendance);
+    void logAttendance(const std::vector<int> attendance);
 
 private:
 
@@ -197,7 +199,11 @@ private:
 
     
     /* Log variables */
+
+    // path to log files
     std::string logPath;
+
+    // ofstreams to write data to files
     std::ofstream numLearningFile;
     std::ofstream performanceFile;
     std::ofstream learningStatusFile;
@@ -209,17 +215,16 @@ private:
 
 };
 
-// template <class T>
-// std::string printVector(std::vector<T> v){
+template <class T>
+void printVector(std::vector<T> v){
 
-//     std::string output = boost::lexical_cast<std::string>(v[0]);
+    std::cout << v[0];
 
-//     for (int i = 1; i < v.size(); ++i){
-//         output += ", " + boost::lexical_cast<std::string>(*i);
-//     }
-//     output += "\n";
+    for (int i = 1; i < v.size(); ++i){
+        std::cout << ", " << v[i];
+    }
+    std::cout << "\n";
 
-//     return output;
-// }
+}
 
 #endif // MULTI_NIGHT_BAR_H_

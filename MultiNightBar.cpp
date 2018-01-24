@@ -1,6 +1,6 @@
 #include "MultiNightBar.hpp"
 
-int debug = 5;
+bool debug = false;
 
 // Constructor
 MultiNightBar::MultiNightBar(int nAgents, int nNights, int cap, int runFlag, double tau,
@@ -178,6 +178,17 @@ void MultiNightBar::simulateEpochFixed(int epochNumber){
 // Simulates a single epoch: agent learning based on impact
 void MultiNightBar::simulateEpochImpact(int epochNumber){
 
+    if (debug)
+    {
+        std::cout << "Computing Impact Run: Epoch " << epochNumber << std::endl;
+    }
+
+    // for the first 10 epochs everyone learns regardless
+    if (epochNumber < 10){
+        simulateEpochFixed(epochNumber);
+        return;
+    }
+
     // poll each agent for an action (get previous action for paused agent)
     std::vector<int> actions = getActions();
 
@@ -203,6 +214,18 @@ void MultiNightBar::simulateEpochImpact(int epochNumber){
     }
     else{
         impacts = computeImpacts(G);
+    }
+
+    if (debug)
+    {
+        std::cout << "D: \n";
+        printVector(D);
+
+        std::cout << "Prev D: \n";
+        printVector(prevD);
+
+        std::cout << "Impacts: \n"; 
+        printVector(impacts);
     }
 
     // compute the probability of learning for each agent
@@ -246,11 +269,8 @@ void MultiNightBar::simulateEpochImpact(int epochNumber){
     std::cout << "NumLearning = " << numLearning << std::endl;
 
     std::cout << "Attendance = "; 
-    std::cout << attendance[0];
+    printVector(attendance);
 
-    for (int i = 1; i < numNights; ++i){
-        std::cout << ", " << attendance[i];
-    }
 
     std::cout << "\n";
 }
@@ -342,7 +362,7 @@ std::vector<int> MultiNightBar::getActions(double exploration){
 }
 
 // Computes the attendance given a vector of agent actions
-std::vector<int> MultiNightBar::computeAttendance(std::vector<int> actions){
+std::vector<int> MultiNightBar::computeAttendance(const std::vector<int>& actions){
     
     std::vector<int> attendance(numNights, 0);
 
@@ -385,7 +405,7 @@ double MultiNightBar::computeG(const std::vector<double>& rewardPerNight){
 }
 
 // Computes the difference reward for each agent based on attendance on a particular night
-std::vector<double> MultiNightBar::computeD(const std::vector<int>& actions, std::vector<int>& attendance){
+std::vector<double> MultiNightBar::computeD(const std::vector<int>& actions, const std::vector<int>& attendance){
 
     assert(actions.size() == numAgents);
     assert(attendance.size() == numNights);
@@ -416,23 +436,39 @@ std::vector<double> MultiNightBar::computeImpacts(double G){
 
     std::vector<double> impacts(numAgents, 0);
 
+
     for (int i = 0; i < numAgents; ++i)
     {
         if (learningStatus[i]){
-            impacts[i] = (G - prevG) / agentVec[i]->getDeltaPi();
+            impacts[i] = std::abs(G - prevG) / agentVec[i]->getDeltaPi();
         }
-        // if the agent is not learning, use last impact
+        // if the agent is not learning, use previous impact
         else{
             impacts[i] = prevImpacts[i];
         }
     }
+
+    if (debug){
+
+        std::vector<double> deltaPis(numAgents, 0);
+
+        for (int i = 0; i < numAgents; ++i)
+        {
+            deltaPis[i] = agentVec[i]->getDeltaPi();
+        }
+
+        std::cout << "deltaG: " << G-prevG << std::endl;
+        std::cout << "delta Pi:\n";
+        printVector(deltaPis);
+    }
+
 
     return impacts;
 }
 
 // Computes the impact given the difference rewards for each agent
 // For fixed agents, the previous impact is used
-std::vector<double> MultiNightBar::computeImpacts(std::vector<double>& D){
+std::vector<double> MultiNightBar::computeImpacts(const std::vector<double>& D){
 
     std::vector<double> impacts(numAgents, 0);
 
@@ -441,7 +477,7 @@ std::vector<double> MultiNightBar::computeImpacts(std::vector<double>& D){
         // if agent is learning, compute change in reward/change in policy
         if (learningStatus[i]){
 
-            impacts[i] = (D[i] - prevD[i]) / agentVec[i]->getDeltaPi();
+            impacts[i] = std::abs(D[i] - prevD[i]) / agentVec[i]->getDeltaPi();
 
         }
         // if the agent is not learning, use last impact
@@ -452,10 +488,27 @@ std::vector<double> MultiNightBar::computeImpacts(std::vector<double>& D){
         }
     }
 
+    if (debug){
+
+        std::vector<double> deltaDs(numAgents, 0);
+        std::vector<double> deltaPis(numAgents, 0);
+
+        for (int i = 0; i < numAgents; ++i)
+        {
+            deltaDs[i] = D[i] - prevD[i];
+            deltaPis[i] = agentVec[i]->getDeltaPi();
+        }
+        std::cout << "\ndelta D:\n";
+        printVector(deltaDs);
+        std::cout << "\ndelta Pi:\n";
+        printVector(deltaPis);        
+
+    }
+
     return impacts;
 }
 
-std::vector<double> MultiNightBar::computeProbLearning(int epochNumber, std::vector<double>& impacts){
+std::vector<double> MultiNightBar::computeProbLearning(int epochNumber, const std::vector<double>& impacts){
 
     std::vector<double> probLearning(numAgents);
 
@@ -502,7 +555,7 @@ void MultiNightBar::setLearningStatus(const std::vector<bool>& newLearningStatus
 
 
 // Updates the Q-Tables of the agents with the same reward (used for Global Reward)
-void MultiNightBar::updateQTables(std::vector<int>& actions, double reward){
+void MultiNightBar::updateQTables(const std::vector<int>& actions, double reward){
 
     for (int i = 0; i < numAgents; ++i){
 
@@ -514,7 +567,7 @@ void MultiNightBar::updateQTables(std::vector<int>& actions, double reward){
 }
 
 // Updates the Q-Tables of the agents with their personalized reward (used for Difference Rewards)
-void MultiNightBar::updateQTables(std::vector<int>& actions, const std::vector<double>& rewards){
+void MultiNightBar::updateQTables(const std::vector<int>& actions, const std::vector<double>& rewards){
 
     for (int i = 0; i < numAgents; ++i){
 
@@ -526,7 +579,7 @@ void MultiNightBar::updateQTables(std::vector<int>& actions, const std::vector<d
 }
 
 // Saves the Previous D values for impact calculation
-void MultiNightBar::updatePrevD(std::vector<double>& newD){
+void MultiNightBar::updatePrevD(const std::vector<double>& newD){
     prevD = newD;
 }
 
@@ -587,7 +640,7 @@ void MultiNightBar::logLearningStatus(){
 }
 
 // log the actions of each agent
-void MultiNightBar::logAgentActions(std::vector<int>& actions){
+void MultiNightBar::logAgentActions(const std::vector<int>& actions){
 
     agentActionFile << actions[0];
 
