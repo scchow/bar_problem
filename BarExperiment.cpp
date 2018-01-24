@@ -16,7 +16,7 @@ int main(){
     bool learnTypeD = true;
     bool impactTypeD = true;
     double learningRate = 0.1;
-    double exploration = 0.01;
+    double exploration = 0.0;
     std::string base_path = "Results/Test2/";
 
 

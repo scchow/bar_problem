@@ -60,7 +60,7 @@ int BarAgent::getBestAction(){
     /* Check for multiple best actions */
 
     // Keep track of max value/indices
-    int maxValue = Q[0];
+    double maxValue = Q[0];
     std::vector<int> maxIndices = {0};
 
     // Loop through the max indices
@@ -72,7 +72,7 @@ int BarAgent::getBestAction(){
             maxIndices.push_back(i);
         }
         // If we encounter entry with (about the) same value as max
-        else if (std::abs(Q[i] - maxValue) < 1e-9){
+        else if (std::abs(Q[i] - maxValue) < 1e-99){
             maxIndices.push_back(i);
         }
     }

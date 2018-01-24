@@ -308,7 +308,9 @@ std::vector<int> MultiNightBar::getActions(){
     for (int i = 0; i < numAgents; ++i){
         // If agent is learning, get action straight from agent
         if (learningStatus[i]){
+            // std::cout << "getting action from agent \n";
             actions[i] = agentVec[i]->getAction();
+            // std::cout << "Got action: " << actions[i] << std::endl;
         }
         // otherwise get its action from previous action table
         else{
