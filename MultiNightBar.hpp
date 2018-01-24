@@ -15,12 +15,12 @@
 #include <sstream>
 
 #include <stddef.h> // for int
-#include <experimental/filesystem>
+// #include <experimental/filesystem>
 
 
 #include "BarAgent.hpp"
 
-namespace fs = std::experimental::filesystem;
+// namespace fs = std::experimental::filesystem;
 
 
 class MultiNightBar
@@ -74,7 +74,7 @@ public:
     double computeG(const std::vector<double>& rewardPerNight);
 
     // Computes the difference reward for each agent based on actions on a particular night
-    std::vector<double> computeD(const std::vector<int>& actions, std::vector<int> attendance);
+    std::vector<double> computeD(const std::vector<int>& actions, std::vector<int>& attendance);
 
     // Computes the impact given the global reward for each agent
     // For fixed agents, the previous impact is used

@@ -15,9 +15,9 @@ int main(){
     int tau = 200;
     bool learnTypeD = true;
     bool impactTypeD = true;
-    double learningRate = 0.9;
-    double exploration = 0.1;
-    std::string base_path = "Results/Test3/";
+    double learningRate = 0.1;
+    double exploration = 0.01;
+    std::string base_path = "Results/Test2/";
 
 
     std::vector<int> fixedAgent = {0, 20, 50, 70, 90};
@@ -41,7 +41,9 @@ int main(){
                 barProblem.simulateEpoch(k);
             }
 
+            barProblem.logQTables();
         }
+
     }
 
 }

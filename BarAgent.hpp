@@ -50,7 +50,7 @@ public:
     double getDeltaPi();
 
     // returns the Q-Table
-    std::vector<double> getQTable();
+    std::vector<double>& getQTable();
 
 
 private:

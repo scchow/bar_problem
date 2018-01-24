@@ -12,6 +12,8 @@ BarAgent::BarAgent(double learningRate, double exploration, int numNights, doubl
     // Random number distribution that chooses an int representing a random night
     distRandNight = std::uniform_int_distribution<>(0, numActions-1);
 
+    deltaPi = 0.0;
+
 }
 
 /* Destructor */
@@ -114,6 +116,6 @@ double BarAgent::getDeltaPi(){
     return deltaPi;
 }
 
-std::vector<double> BarAgent::getQTable(){
+std::vector<double>& BarAgent::getQTable(){
     return Q;
 }

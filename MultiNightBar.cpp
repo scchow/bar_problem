@@ -19,6 +19,9 @@ MultiNightBar::MultiNightBar(int nAgents, int nNights, int cap, int runFlag, dou
 
     // compute best possible reward per night, for use in optimistic initialization of bar agents
     double maxReward = numNights * capacity;
+    if (learningD){
+        maxReward = capacity;
+    }
 
     // create a vector of bar agents
     // set initial learning status
@@ -135,9 +138,11 @@ void MultiNightBar::simulateEpochFixed(int epochNumber){
 
     // update Q tables of learning agents
     if (learningD){
+        std::cout << "learning with D" << std::endl;
         updateQTables(actions, D);
     }
     else{
+        std::cout << "learning with G" << std::endl;
         updateQTables(actions, G);
     }
 
@@ -248,7 +253,6 @@ void MultiNightBar::simulateEpochImpact(int epochNumber){
     }
 
     std::cout << "\n";
-
 }
 
 // Simulates a single epoch: agent learning based on random prob
@@ -341,7 +345,7 @@ std::vector<int> MultiNightBar::computeAttendance(std::vector<int> actions){
     std::vector<int> attendance(numNights, 0);
 
     for (int i = 0; i < numAgents; ++i){
-        attendance[actions[i]] += 1;
+        attendance[actions[i]]++;
     }
 
     return attendance;
@@ -379,7 +383,10 @@ double MultiNightBar::computeG(const std::vector<double>& rewardPerNight){
 }
 
 // Computes the difference reward for each agent based on attendance on a particular night
-std::vector<double> MultiNightBar::computeD(const std::vector<int>& actions, std::vector<int> attendance){
+std::vector<double> MultiNightBar::computeD(const std::vector<int>& actions, std::vector<int>& attendance){
+
+    assert(actions.size() == numAgents);
+    assert(attendance.size() == numNights);
 
     std::vector<double> D(numAgents, 0);
     // std::cout << "D = ";
