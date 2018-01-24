@@ -1,6 +1,6 @@
 #include "MultiNightBar.hpp"
 
-bool debug = false;
+bool debug = true;
 
 // Constructor
 MultiNightBar::MultiNightBar(int nAgents, int nNights, int cap, int runFlag, double tau,
@@ -510,12 +510,12 @@ std::vector<double> MultiNightBar::computeImpacts(const std::vector<double>& D){
 
 std::vector<double> MultiNightBar::computeProbLearning(int epochNumber, const std::vector<double>& impacts){
 
-    std::vector<double> probLearning(numAgents);
+    std::vector<double> probLearning(numAgents, 0);
 
     for (int i = 0; i < numAgents; ++i)
     {
         double prob = 1 - std::exp((-1 * impacts[i] * constInvTemp(epochNumber)));
-        probLearning.push_back(prob);
+        probLearning[i] = prob;
     }
     
     return probLearning;
@@ -524,7 +524,7 @@ std::vector<double> MultiNightBar::computeProbLearning(int epochNumber, const st
 // Returns a bool vector defining which agents should and should not learn based on probability of learning
 std::vector<bool> MultiNightBar::computeLearningStatus(const std::vector<double>& probLearning){
 
-    std::vector<bool> newLearningStatus(numAgents);
+    std::vector<bool> newLearningStatus(numAgents, false);
 
     for (int i = 0; i < numAgents; ++i){
         
