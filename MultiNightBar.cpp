@@ -1,6 +1,6 @@
 #include "MultiNightBar.hpp"
 
-bool debug = true;
+bool debug = false;
 
 // Constructor
 MultiNightBar::MultiNightBar(int nAgents, int nNights, int cap, int runFlag, double tau,
@@ -544,10 +544,10 @@ void MultiNightBar::setLearningStatus(const std::vector<bool>& newLearningStatus
 
     for (int i = 0; i < numAgents; ++i){
         // if the agent is no longer learning, save its action and impact
-        if (!newLearningStatus[i]){
+        // if (!newLearningStatus[i]){
             prevActions[i] = actions[i];
             prevImpacts[i] = impacts[i];
-        }
+        // }
 
         learningStatus[i] = newLearningStatus[i];
     }
