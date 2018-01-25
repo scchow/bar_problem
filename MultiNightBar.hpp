@@ -109,7 +109,7 @@ public:
     void updatePrevG(double newG);
 
     // constant temperature function - returns the inverse of temperature value to save computation
-    int constInvTemp(int epochNumber);
+    double constInvTemp(int epochNumber);
 
     // creates ofstreams for each of the loggers based on the string path provided
     void setupLoggers();

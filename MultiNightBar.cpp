@@ -440,11 +440,12 @@ std::vector<double> MultiNightBar::computeImpacts(double G){
 
     std::vector<double> impacts(numAgents, 0);
 
+    double deltaG = std::abs(G - prevG);
 
     for (int i = 0; i < numAgents; ++i)
     {
         if (learningStatus[i]){
-            impacts[i] = std::abs(G - prevG) / agentVec[i]->getDeltaPi();
+            impacts[i] = deltaG / agentVec[i]->getDeltaPi();
         }
         // if the agent is not learning, use previous impact
         else{
@@ -461,7 +462,7 @@ std::vector<double> MultiNightBar::computeImpacts(double G){
             deltaPis[i] = agentVec[i]->getDeltaPi();
         }
 
-        std::cout << "deltaG: " << G-prevG << std::endl;
+        std::cout << "deltaG: " << deltaG << std::endl;
         std::cout << "delta Pi:\n";
         printVector(deltaPis);
     }
@@ -518,7 +519,7 @@ std::vector<double> MultiNightBar::computeProbLearning(int epochNumber, const st
 
     for (int i = 0; i < numAgents; ++i)
     {
-        double prob = 1 - std::exp((-1 * impacts[i] * constInvTemp(epochNumber)));
+        double prob = 1.0 - std::exp((-1.0 * impacts[i] * constInvTemp(epochNumber)));
         probLearning[i] = prob;
     }
     
@@ -593,7 +594,7 @@ void MultiNightBar::updatePrevG(double newG){
 }
 
 // constant temperature function
-int MultiNightBar::constInvTemp(int epochNumber){
+double MultiNightBar::constInvTemp(int epochNumber){
     return invTemp;
 }
 
