@@ -138,11 +138,15 @@ void MultiNightBar::simulateEpochFixed(int epochNumber){
 
     // update Q tables of learning agents
     if (learningD){
-        std::cout << "learning with D" << std::endl;
+        if (debug){
+            std::cout << "learning with D" << std::endl;
+        }
         updateQTables(actions, D);
     }
     else{
-        std::cout << "learning with G" << std::endl;
+        if (debug){
+            std::cout << "learning with G" << std::endl;
+        }
         updateQTables(actions, G);
     }
 
@@ -407,8 +411,8 @@ double MultiNightBar::computeG(const std::vector<double>& rewardPerNight){
 // Computes the difference reward for each agent based on attendance on a particular night
 std::vector<double> MultiNightBar::computeD(const std::vector<int>& actions, const std::vector<int>& attendance){
 
-    assert(actions.size() == numAgents);
-    assert(attendance.size() == numNights);
+    assert((int) actions.size() == numAgents);
+    assert((int) attendance.size() == numNights);
 
     std::vector<double> D(numAgents, 0);
     // std::cout << "D = ";
