@@ -94,7 +94,7 @@ public:
 
     // Sets the Learning Status for the agents (uses output of computeLearningStatus())
     // Also records the impact factor/action for agents who have stopped learning for use in relearning
-    void setLearningStatus(const std::vector<bool>& learningStatus, const std::vector<int>& actions, const std::vector<double>& impacts);
+    void setLearningStatus(const std::vector<bool>& learningStatus, const std::vector<int>& actions, const std::vector<double>& probs);
 
     // Updates the Q-Tables of the agents with the same reward (used for Global Reward)
     void updateQTables(const std::vector<int>& actions, double reward);
@@ -175,9 +175,11 @@ private:
     // learning status vector - bool vector, 0 = nonlearning, 1 = learning
     std::vector<bool> learningStatus;
     // remember previous actions for non-learning agents
-    std::vector<double> prevActions;
-    // remember previous impacts for non-learning agents
-    std::vector<double> prevImpacts;
+    std::vector<int> prevActions;
+    // remember previous impacts for non-learning agents - unused and replaced by prevProbs
+    // std::vector<double> prevImpacts;
+    // remember previous probability of learning for non-learning agents
+    std::vector<double> prevProbs;
 
 
     /* Vars for memory of previous runs for impact/non-learning agents */

@@ -36,8 +36,8 @@ MultiNightBar::MultiNightBar(int nAgents, int nNights, int cap, int runFlag, dou
         // this allows random initialization of fixed agents
         prevActions.push_back(distRandNight(generator));
 
-        // let previous impact be infinity
-        prevImpacts.push_back(std::numeric_limits<float>::infinity());
+        // let previous probability of learning be 1
+        prevProbs.push_back(1.0);
 
         // default difference reward
         prevD.push_back(0);
@@ -238,8 +238,8 @@ void MultiNightBar::simulateEpochImpact(int epochNumber){
     // compute learning status of the agents via probability
     std::vector<bool> newLearningStatus = computeLearningStatus(probLearning);
 
-    // set the learning status of agents, recording impact and action for fixed learners
-    setLearningStatus(newLearningStatus, actions, impacts);
+    // set the learning status of agents, recording probability of learning and action for all learners
+    setLearningStatus(newLearningStatus, actions, probLearning);
 
     // update Q tables of learning agents
     if (learningD){
@@ -444,12 +444,9 @@ std::vector<double> MultiNightBar::computeImpacts(double G){
 
     for (int i = 0; i < numAgents; ++i)
     {
+        // if agent is learning, compute change in reward/change in policy
         if (learningStatus[i]){
             impacts[i] = deltaG / agentVec[i]->getDeltaPi();
-        }
-        // if the agent is not learning, use previous impact
-        else{
-            impacts[i] = prevImpacts[i];
         }
     }
 
@@ -466,7 +463,6 @@ std::vector<double> MultiNightBar::computeImpacts(double G){
         std::cout << "delta Pi:\n";
         printVector(deltaPis);
     }
-
 
     return impacts;
 }
@@ -485,12 +481,7 @@ std::vector<double> MultiNightBar::computeImpacts(const std::vector<double>& D){
             impacts[i] = std::abs(D[i] - prevD[i]) / agentVec[i]->getDeltaPi();
 
         }
-        // if the agent is not learning, use last impact
-        else{
 
-            impacts[i] = prevImpacts[i];
-
-        }
     }
 
     if (debug){
@@ -519,8 +510,12 @@ std::vector<double> MultiNightBar::computeProbLearning(int epochNumber, const st
 
     for (int i = 0; i < numAgents; ++i)
     {
-        double prob = 1.0 - std::exp((-1.0 * impacts[i] * constInvTemp(epochNumber)));
-        probLearning[i] = prob;
+        if (learningStatus[i]){
+            probLearning[i] = 1.0 - std::exp((-1.0 * impacts[i] * constInvTemp(epochNumber)));
+        }
+        else{
+            probLearning[i] = prevProbs[i];
+        }
     }
     
     return probLearning;
@@ -545,17 +540,21 @@ std::vector<bool> MultiNightBar::computeLearningStatus(const std::vector<double>
 
 // Sets the Learning Status for the agents (uses output of computeLearningStatus())
 // Also records the impact factor/action for agents who have stopped learning for use in relearning
-void MultiNightBar::setLearningStatus(const std::vector<bool>& newLearningStatus, const std::vector<int>& actions, const std::vector<double>& impacts){
+void MultiNightBar::setLearningStatus(const std::vector<bool>& newLearningStatus, const std::vector<int>& actions, const std::vector<double>& probs){
 
-    for (int i = 0; i < numAgents; ++i){
-        // if the agent is no longer learning, save its action and impact
-        // if (!newLearningStatus[i]){
-            prevActions[i] = actions[i];
-            prevImpacts[i] = impacts[i];
-        // }
+    prevActions = actions;
+    prevProbs = probs;
+    learningStatus = newLearningStatus;
 
-        learningStatus[i] = newLearningStatus[i];
-    }
+    // for (int i = 0; i < numAgents; ++i){
+    //     // if the agent is no longer learning, save its action and impact
+    //     // if (!newLearningStatus[i]){
+    //         prevActions[i] = actions[i];
+    //         prevProbs[i] = probs[i];
+    //     // }
+
+    //     learningStatus[i] = newLearningStatus[i];
+    // }
 }
 
 

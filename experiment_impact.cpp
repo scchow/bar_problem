@@ -20,7 +20,7 @@ int main(){
     std::string base_path = "Results/impact_G/";
 
 
-    std::vector<double> taus = {300.0, 1.0, 50.0, 100.0, 500.0, 1000.0};
+    std::vector<double> taus = {300.0};
     int numRuns = 2;
     int numEpochs = 3000;
 
