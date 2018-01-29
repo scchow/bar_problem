@@ -6,13 +6,14 @@ bool debug = false;
 MultiNightBar::MultiNightBar(int nAgents, int nNights, int cap, int runFlag, double tau,
                              bool learnTypeD, bool impactTypeD,
                              double learningRate, double exploration,
-                             std::string path):
+                             std::string path, int initialEpochs):
                              numAgents(nAgents), numNights(nNights), capacity(cap), runType(runFlag),
                              learningD(learnTypeD), impactD(impactTypeD), 
-                             alpha(learningRate), epsilon(exploration), logPath(path)
+                             alpha(learningRate), epsilon(exploration), logPath(path), graceEpochs(initialEpochs)
 {
     // save temperature as inverse to save computation
     invTemp = 1/tau;
+    temp = tau;
 
     // Random number distribution that chooses an int representing a random night
     std::uniform_int_distribution<> distRandNight(0, numNights-1);
@@ -105,6 +106,8 @@ void MultiNightBar::simulateEpoch(int epochNumber, double learnProb){
                 break;
         case 3: simulateEpochRandom(epochNumber, learnProb);
                 break;
+        case 4: simulateEpochTemp(epochNumber);
+                break;
     }
 }
 
@@ -188,7 +191,7 @@ void MultiNightBar::simulateEpochImpact(int epochNumber){
     }
 
     // for the first 10 epochs everyone learns regardless
-    if (epochNumber < 10){
+    if (epochNumber < graceEpochs){
         simulateEpochFixed(epochNumber);
         return;
     }
@@ -268,6 +271,9 @@ void MultiNightBar::simulateEpochImpact(int epochNumber){
     // log the actions of each agent
     logAgentActions(actions);
 
+    // log the attendance
+    logAttendance(attendance);
+
     std::cout << "Global Reward = " << G << std::endl;
 
     std::cout << "NumLearning = " << numLearning << std::endl;
@@ -322,6 +328,100 @@ void MultiNightBar::simulateEpochRandom(int epochNumber, double learnProb){
         updatePrevD(D);
     }
 }
+
+// Simulates a single epoch: agent learning based on temperature
+void MultiNightBar::simulateEpochTemp(int epochNumber){
+
+    if (debug)
+    {
+        std::cout << "Computing Temperature Run: Epoch " << epochNumber << std::endl;
+    }
+
+    // for the first graceEpochs everyone learns regardless
+    if (epochNumber < graceEpochs){
+        simulateEpochFixed(epochNumber);
+        return;
+    }
+
+    // poll each agent for an action (get previous action for paused agent)
+    std::vector<int> actions = getActions();
+
+    // compute the attendance
+    std::vector<int> attendance = computeAttendance(actions);
+
+    // compute reward per night
+    std::vector<double> rewardPerNight = computeRewardMulti(attendance);
+
+    // compute global reward
+    double G = computeG(rewardPerNight);
+
+    // if necessary compute D
+    std::vector<double> D;
+    if (useD){
+        D = computeD(actions, attendance);
+    }
+
+    if (debug)
+    {
+        std::cout << "D: \n";
+        printVector(D);
+
+        std::cout << "Prev D: \n";
+        printVector(prevD);
+
+    }
+
+    // compute the probability of learning for each agent
+    double prob = 1.0 - std::exp(-1 * (double) epochNumber/(double) temp);
+    std::vector<double> probLearning(numAgents, prob);
+
+    // compute learning status of the agents via probability
+    std::vector<bool> newLearningStatus = computeLearningStatus(probLearning);
+
+    // set the learning status of agents, recording probability of learning and action for all learners
+    setLearningStatus(newLearningStatus, actions, probLearning);
+
+    // update Q tables of learning agents
+    if (learningD){
+        updateQTables(actions, D);
+    }
+    else{
+        updateQTables(actions, G);
+    }
+
+    // save G and/or D for future impact calculation
+    updatePrevG(G);
+
+    if (useD){
+        updatePrevD(D);
+    }
+
+    // Logs the number of agents learning at each epoch
+    int numLearning = logNumLearning(epochNumber);
+
+    // Log the performance at each epoch
+    logPerformance(epochNumber, G);
+
+    // Log the learning of each agent
+    logLearningStatus();
+
+    // log the actions of each agent
+    logAgentActions(actions);
+
+    // log the attendance
+    logAttendance(attendance);
+
+    std::cout << "Global Reward = " << G << std::endl;
+
+    std::cout << "NumLearning = " << numLearning << std::endl;
+
+    std::cout << "Attendance = "; 
+    printVector(attendance);
+
+
+    std::cout << "\n";
+}
+
 
 // Polls each agent for an action. Uses the default exploration rate.
 // For fixed agents, the previous action taken by that agent is used
@@ -708,5 +808,6 @@ void MultiNightBar::logReadMe(){
     readmeFile << "Learning Rate: " << alpha << "\n";
     // default exploration rate for the agents
     readmeFile << "Exploration Rate: " << epsilon << "\n";
+    readmeFile << "Grace Epochs (only used for impact: " << graceEpochs << "\n";
 }
 

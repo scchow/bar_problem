@@ -15,8 +15,8 @@ nights = 10;
 capacity = 10;
 numTrials = 10;
 
-explorations = {'0.050000', '0.100000', '0.200000', '0.500000', '0.700000', '0.900000'};
-legendStr = {'0.05', '0.1', '0.2', '0.5', '0.7', '0.9'};
+explorations = {'0.050000', '0.100000', '0.200000', '0.500000','0.900000'};
+legendStr = {'0.05', '0.1', '0.2', '0.5', '0.9'};
 legendStr = arrayfun(@(x) strcat('$Explore Rate = ', x,'$'), legendStr);
 
 % On Desktop

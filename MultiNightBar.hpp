@@ -32,7 +32,7 @@ public:
     MultiNightBar(int nAgents, int nNights, int cap, int runFlag, double tau, 
                     bool learnTypeD, bool impactTypeD, 
                     double learningRate, double exploration,
-                    std::string path);
+                    std::string path, int initialEpochs = 10);
 
     // Destructor
     ~MultiNightBar();
@@ -52,6 +52,9 @@ public:
 
     // Simulates a single epoch: agent learning based on random prob
     void simulateEpochRandom(int epochNumber, double learnProb);
+
+    // Simulates a single epoch: agent learning based on temperature
+    void simulateEpochTemp(int epochNumber);
 
     // Polls each agent for an action. Uses the default exploration rate.
     // For fixed agents, the previous action taken by that agent is used
@@ -154,6 +157,7 @@ private:
 
     // inverse of tau - temperature value
     double invTemp;
+    double temp;
 
     // learning type (True if agents learn using D, else agents learning using G)
     bool learningD;
@@ -162,6 +166,9 @@ private:
 
     // flag for computing D
     bool useD;
+
+    // Number of epochs for all agents to learn before enforcing impact
+    int graceEpochs;
 
 
     /* Agent Params */
