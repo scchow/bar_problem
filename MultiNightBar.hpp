@@ -56,6 +56,10 @@ public:
     // Simulates a single epoch: agent learning based on temperature
     void simulateEpochTemp(int epochNumber);
 
+    // Simulates a single epoch: agent learning based on temperature and epoch number
+    // Agents who are learning remain learning every epoch
+    void simulateEpochTempFixed(int epochNumber);
+
     // Polls each agent for an action. Uses the default exploration rate.
     // For fixed agents, the previous action taken by that agent is used
     std::vector<int> getActions();

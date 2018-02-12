@@ -83,7 +83,6 @@ MultiNightBar::~MultiNightBar(){
     agentActionFile.close();
     qTableFile.close();
     readmeFile.close();
-
 }
 
 // Sets numFixedAgents to not Learning
@@ -108,6 +107,7 @@ void MultiNightBar::simulateEpoch(int epochNumber, double learnProb){
                 break;
         case 4: simulateEpochTemp(epochNumber);
                 break;
+        case 5: simulateEpochTempFixed(epochNumber);
     }
 }
 
@@ -329,7 +329,8 @@ void MultiNightBar::simulateEpochRandom(int epochNumber, double learnProb){
     }
 }
 
-// Simulates a single epoch: agent learning based on temperature
+// Simulates a single epoch: agent learning based on temperature and epoch number
+// Agents are randomly chosen to learn every epoch based on probability
 void MultiNightBar::simulateEpochTemp(int epochNumber){
 
     if (debug)
@@ -422,6 +423,103 @@ void MultiNightBar::simulateEpochTemp(int epochNumber){
     std::cout << "\n";
 }
 
+// Simulates a single epoch: agent learning based on temperature and epoch number
+// Agents who are learning remain learning every epoch
+void MultiNightBar::simulateEpochTempFixed(int epochNumber){
+
+    if (debug)
+    {
+        std::cout << "Computing Temperature Run: Epoch " << epochNumber << std::endl;
+    }
+
+    // for the first graceEpochs everyone learns regardless
+    if (epochNumber < graceEpochs){
+        simulateEpochFixed(epochNumber);
+        return;
+    }
+
+    // poll each agent for an action (get previous action for paused agent)
+    std::vector<int> actions = getActions();
+
+    // compute the attendance
+    std::vector<int> attendance = computeAttendance(actions);
+
+    // compute reward per night
+    std::vector<double> rewardPerNight = computeRewardMulti(attendance);
+
+    // compute global reward
+    double G = computeG(rewardPerNight);
+
+    // if necessary compute D
+    std::vector<double> D;
+    if (useD){
+        D = computeD(actions, attendance);
+    }
+
+    if (debug)
+    {
+        std::cout << "D: \n";
+        printVector(D);
+
+        std::cout << "Prev D: \n";
+        printVector(prevD);
+
+    }
+
+    // compute the goal number of agents to be learning this epoch
+    double prob = 1.0 - std::exp(-1 * (double) epochNumber/(double) temp);
+    int goalAgents = (int) std::lround(prob * numAgents);
+
+    // let the first goalAgents agents learn
+    std::vector<bool> newLearningStatus(numAgents, false);
+    
+    for (int i = 0; i < goalAgents; ++i)
+    {
+        newLearningStatus[i] = true;
+    }
+
+    learningStatus = newLearningStatus;
+
+    // update Q tables of learning agents
+    if (learningD){
+        updateQTables(actions, D);
+    }
+    else{
+        updateQTables(actions, G);
+    }
+
+    // save G and/or D for future impact calculation
+    updatePrevG(G);
+
+    if (useD){
+        updatePrevD(D);
+    }
+
+    // Logs the number of agents learning at each epoch
+    int numLearning = logNumLearning(epochNumber);
+
+    // Log the performance at each epoch
+    logPerformance(epochNumber, G);
+
+    // Log the learning of each agent
+    logLearningStatus();
+
+    // log the actions of each agent
+    logAgentActions(actions);
+
+    // log the attendance
+    logAttendance(attendance);
+
+    std::cout << "Global Reward = " << G << std::endl;
+
+    std::cout << "NumLearning = " << numLearning << std::endl;
+
+    std::cout << "Attendance = "; 
+    printVector(attendance);
+
+
+    std::cout << "\n";
+}
 
 // Polls each agent for an action. Uses the default exploration rate.
 // For fixed agents, the previous action taken by that agent is used

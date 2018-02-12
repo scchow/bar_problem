@@ -12,7 +12,7 @@ int main(){
     int nNights = 10;
     int cap = 10;
     int runFlag = 4;
-    int tau = 200;
+    // int tau = 200;
     bool learnTypeD = true;
     bool impactTypeD = false;
     double learningRate = 0.1;
