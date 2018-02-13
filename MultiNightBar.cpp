@@ -543,6 +543,116 @@ std::vector<int> MultiNightBar::getActions(){
     return actions;
 }
 
+// Simulates a single epoch: agent learning based on staggered impact
+// Impact and learning status is only computed/updated every n epochs
+void MultiNightBar::simulateEpochStaggeredImpact(int epochNumber){
+
+    // Learn every epochLearn epochs
+    int epochLearn = 10;
+
+    if (debug)
+    {
+        std::cout << "Computing Impact Run: Epoch " << epochNumber << std::endl;
+    }
+
+    // for the first 10 epochs everyone learns regardless
+    if (epochNumber < graceEpochs){
+        simulateEpochFixed(epochNumber);
+        return;
+    }
+
+    // poll each agent for an action (get previous action for paused agent)
+    std::vector<int> actions = getActions();
+
+    // compute the attendance
+    std::vector<int> attendance = computeAttendance(actions);
+
+    // compute reward per night
+    std::vector<double> rewardPerNight = computeRewardMulti(attendance);
+
+    // compute global reward
+    double G = computeG(rewardPerNight);
+
+    // if necessary compute D
+    std::vector<double> D;
+    if (useD){
+        D = computeD(actions, attendance);
+    }
+
+    if (epochNumber % epochLearn == 0)
+    {
+        // compute impact (get previous impact for paused agents)
+        std::vector<double> impacts;
+        if (impactD){
+            impacts = computeImpacts(D);
+        }
+        else{
+            impacts = computeImpacts(G);
+        }
+
+        if (debug)
+        {
+            std::cout << "D: \n";
+            printVector(D);
+
+            std::cout << "Prev D: \n";
+            printVector(prevD);
+
+            std::cout << "Impacts: \n"; 
+            printVector(impacts);
+        }
+
+        // compute the probability of learning for each agent
+        std::vector<double> probLearning = computeProbLearning(epochNumber, impacts);
+
+        // compute learning status of the agents via probability
+        std::vector<bool> newLearningStatus = computeLearningStatus(probLearning);
+
+        // set the learning status of agents, recording probability of learning and action for all learners
+        setLearningStatus(newLearningStatus, actions, probLearning);
+
+        // update Q tables of learning agents
+        if (learningD){
+            updateQTables(actions, D);
+        }
+        else{
+            updateQTables(actions, G);
+        }
+
+        // save G and/or D for future impact calculation
+        updatePrevG(G);
+
+        if (useD){
+            updatePrevD(D);
+        }
+    }
+
+    // Logs the number of agents learning at each epoch
+    int numLearning = logNumLearning(epochNumber);
+
+    // Log the performance at each epoch
+    logPerformance(epochNumber, G);
+
+    // Log the learning of each agent
+    logLearningStatus();
+
+    // log the actions of each agent
+    logAgentActions(actions);
+
+    // log the attendance
+    logAttendance(attendance);
+
+    std::cout << "Global Reward = " << G << std::endl;
+
+    std::cout << "NumLearning = " << numLearning << std::endl;
+
+    std::cout << "Attendance = "; 
+    printVector(attendance);
+
+
+    std::cout << "\n";
+}
+
 // Polls each agent for an action. Uses the provided exploration rate.
 // For fixed agents, the previous action taken by that agent is used
 std::vector<int> MultiNightBar::getActions(double exploration){

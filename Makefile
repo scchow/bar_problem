@@ -3,7 +3,7 @@ CXXFLAGS=-g -std=c++11 -Wall -pedantic
 LDLIBS = -lstdc++fs
 # DEPS = BarAgent.hpp MultiNightBar.hpp 
 # OBJ = BarAgent.o MultiNightBar.o 
-# TARGETS = impactExp fixedExp tempExp BarAgent.o MultiNightBar.o
+TARGETS = impactExp fixedExp tempExp tempFixedExp BarAgent.o MultiNightBar.o
 
 # %.o: %.c $(DEPS) $(LDLIBS)
 # 	$(CXX) -c -o $@ $< $(CFLAGS)
