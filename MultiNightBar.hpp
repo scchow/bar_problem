@@ -7,6 +7,7 @@
 #include <random> // for rng
 #include <cmath>  // for exp, abs functions
 #include <limits> // for infinity
+#include <algorithm> // for max
 
 // #include <boost/lexical_cast.hpp>
 
@@ -63,6 +64,11 @@ public:
     // Simulates a single epoch: agent learning based on staggered impact
     // Impact and learning status is only computed/updated every n epochs
     void simulateEpochStaggeredImpact(int epochNumber);
+
+    // Simulates a single epoch: agent learning based on normalized impact
+    // Impact and learning status is only computed/updated every n epochs
+    // Impact is normalized before learning status is computed
+    void simulateEpochNormImpact(int epochNumber);
 
     // Polls each agent for an action. Uses the default exploration rate.
     // For fixed agents, the previous action taken by that agent is used
