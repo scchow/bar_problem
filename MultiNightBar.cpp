@@ -521,28 +521,6 @@ void MultiNightBar::simulateEpochTempFixed(int epochNumber){
     std::cout << "\n";
 }
 
-// Polls each agent for an action. Uses the default exploration rate.
-// For fixed agents, the previous action taken by that agent is used
-std::vector<int> MultiNightBar::getActions(){
-
-    std::vector<int> actions(numAgents);
-
-    for (int i = 0; i < numAgents; ++i){
-        // If agent is learning, get action straight from agent
-        if (learningStatus[i]){
-            // std::cout << "getting action from agent \n";
-            actions[i] = agentVec[i]->getAction();
-            // std::cout << "Got action: " << actions[i] << std::endl;
-        }
-        // otherwise get its action from previous action table
-        else{
-            actions[i] = prevActions[i];
-        }
-    }
-
-    return actions;
-}
-
 // Simulates a single epoch: agent learning based on staggered impact
 // Impact and learning status is only computed/updated every n epochs
 void MultiNightBar::simulateEpochStaggeredImpact(int epochNumber){
@@ -652,6 +630,30 @@ void MultiNightBar::simulateEpochStaggeredImpact(int epochNumber){
 
     std::cout << "\n";
 }
+
+// Polls each agent for an action. Uses the default exploration rate.
+// For fixed agents, the previous action taken by that agent is used
+std::vector<int> MultiNightBar::getActions(){
+
+    std::vector<int> actions(numAgents);
+
+    for (int i = 0; i < numAgents; ++i){
+        // If agent is learning, get action straight from agent
+        if (learningStatus[i]){
+            // std::cout << "getting action from agent \n";
+            actions[i] = agentVec[i]->getAction();
+            // std::cout << "Got action: " << actions[i] << std::endl;
+        }
+        // otherwise get its action from previous action table
+        else{
+            actions[i] = prevActions[i];
+        }
+    }
+
+    return actions;
+}
+
+
 
 // Polls each agent for an action. Uses the provided exploration rate.
 // For fixed agents, the previous action taken by that agent is used

@@ -60,6 +60,10 @@ public:
     // Agents who are learning remain learning every epoch
     void simulateEpochTempFixed(int epochNumber);
 
+    // Simulates a single epoch: agent learning based on staggered impact
+    // Impact and learning status is only computed/updated every n epochs
+    void simulateEpochStaggeredImpact(int epochNumber);
+
     // Polls each agent for an action. Uses the default exploration rate.
     // For fixed agents, the previous action taken by that agent is used
     std::vector<int> getActions();
