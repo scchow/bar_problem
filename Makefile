@@ -3,7 +3,7 @@ CXXFLAGS=-g -std=c++11 -Wall -pedantic
 LDLIBS = -lstdc++fs
 # DEPS = BarAgent.hpp MultiNightBar.hpp 
 # OBJ = BarAgent.o MultiNightBar.o 
-TARGETS = impactExp fixedExp tempExp tempFixedExp BarAgent.o MultiNightBar.o
+TARGETS = impactExp fixedExp tempExp tempFixedExp impactStagExp BarAgent.o MultiNightBar.o
 
 # %.o: %.c $(DEPS) $(LDLIBS)
 # 	$(CXX) -c -o $@ $< $(CFLAGS)
@@ -11,7 +11,7 @@ TARGETS = impactExp fixedExp tempExp tempFixedExp BarAgent.o MultiNightBar.o
 # experiment: $(OBJ)
 # 	g++ -o $@ $^ $(CFLAGS)
 
-all: impact_exp fixed_exp temp_exp tempfix_exp
+all: impact_exp fixed_exp temp_exp tempfix_exp impact_stag_exp
 
 BarAgent.o: BarAgent.cpp BarAgent.hpp
 	g++ -c $(CXXFLAGS) BarAgent.cpp -o BarAgent.o
@@ -30,6 +30,9 @@ temp_exp: BarAgent.o MultiNightBar.o experiment_temp.cpp
 
 tempfix_exp: BarAgent.o MultiNightBar.o experiment_tempfix.cpp
 	g++ $(CXXFLAGS) BarAgent.o MultiNightBar.o experiment_tempfix.cpp -o tempFixedExp
+
+impact_stag_exp: BarAgent.o MultiNightBar.o experiment_staggered_impact.cpp
+	g++ $(CXXFLAGS) BarAgent.o MultiNightBar.o experiment_staggered_impact.cpp -o impactStagExp
 
 clean:
 	rm -f ${TARGETS}

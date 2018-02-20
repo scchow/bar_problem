@@ -108,6 +108,9 @@ void MultiNightBar::simulateEpoch(int epochNumber, double learnProb){
         case 4: simulateEpochTemp(epochNumber);
                 break;
         case 5: simulateEpochTempFixed(epochNumber);
+                break;
+        case 6: simulateEpochStaggeredImpact(epochNumber);
+                break;
     }
 }
 
