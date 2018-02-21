@@ -531,7 +531,7 @@ void MultiNightBar::simulateEpochTempFixed(int epochNumber){
 void MultiNightBar::simulateEpochStaggeredImpact(int epochNumber){
 
     // Learn every epochLearn epochs
-    int epochLearn = 10;
+    int epochLearn = 20;
 
     if (debug)
     {
@@ -561,6 +561,8 @@ void MultiNightBar::simulateEpochStaggeredImpact(int epochNumber){
     if (useD){
         D = computeD(actions, attendance);
     }
+
+    bool updateDeltaPi = false;
 
     if (epochNumber % epochLearn == 0)
     {
@@ -594,12 +596,16 @@ void MultiNightBar::simulateEpochStaggeredImpact(int epochNumber){
         // set the learning status of agents, recording probability of learning and action for all learners
         setLearningStatus(newLearningStatus, actions, probLearning);
 
+        // Update deltaPi
+        updateDeltaPi = true;
+
+    }
         // update Q tables of learning agents
         if (learningD){
-            updateQTables(actions, D);
+            updateQTables(actions, D, updateDeltaPi);
         }
         else{
-            updateQTables(actions, G);
+            updateQTables(actions, G, updateDeltaPi);
         }
 
         // save G and/or D for future impact calculation
@@ -608,7 +614,6 @@ void MultiNightBar::simulateEpochStaggeredImpact(int epochNumber){
         if (useD){
             updatePrevD(D);
         }
-    }
 
     // Logs the number of agents learning at each epoch
     int numLearning = logNumLearning(epochNumber);
@@ -641,8 +646,8 @@ void MultiNightBar::simulateEpochStaggeredImpact(int epochNumber){
 // Impact is normalized before learning status is computed
 void MultiNightBar::simulateEpochNormImpact(int epochNumber){
 
-    // Learn every epochLearn epochs
-    int epochLearn = 20;
+    // // Learn every epochLearn epochs
+    // int epochLearn = 20;
 
     if (debug)
     {
@@ -673,60 +678,58 @@ void MultiNightBar::simulateEpochNormImpact(int epochNumber){
         D = computeD(actions, attendance);
     }
 
-    if (epochNumber % epochLearn == 0)
-    {
-        // compute impact (get previous impact for paused agents)
-        std::vector<double> impacts;
-        if (impactD){
-            impacts = computeImpacts(D);
-        }
-        else{
-            impacts = computeImpacts(G);
-        }
-
-        if (debug)
-        {
-            std::cout << "D: \n";
-            printVector(D);
-
-            std::cout << "Prev D: \n";
-            printVector(prevD);
-
-            std::cout << "Impacts: \n"; 
-            printVector(impacts);
-        }
-
-        //get max element
-        double maxImpact = *std::max_element(impacts.begin(),impacts.end());
-
-        for (size_t i=0; i < impacts.size(); ++i){
-            impacts[i] = impacts[i]/maxImpact;
-        }
-
-        // compute the probability of learning for each agent
-        std::vector<double> probLearning = computeProbLearning(epochNumber, impacts);
-
-        // compute learning status of the agents via probability
-        std::vector<bool> newLearningStatus = computeLearningStatus(probLearning);
-
-        // set the learning status of agents, recording probability of learning and action for all learners
-        setLearningStatus(newLearningStatus, actions, probLearning);
-
-        // update Q tables of learning agents
-        if (learningD){
-            updateQTables(actions, D);
-        }
-        else{
-            updateQTables(actions, G);
-        }
-
-        // save G and/or D for future impact calculation
-        updatePrevG(G);
-
-        if (useD){
-            updatePrevD(D);
-        }
+    // compute impact (get previous impact for paused agents)
+    std::vector<double> impacts;
+    if (impactD){
+        impacts = computeImpacts(D);
     }
+    else{
+        impacts = computeImpacts(G);
+    }
+
+    if (debug)
+    {
+        std::cout << "D: \n";
+        printVector(D);
+
+        std::cout << "Prev D: \n";
+        printVector(prevD);
+
+        std::cout << "Impacts: \n"; 
+        printVector(impacts);
+    }
+
+    //get max element
+    double maxImpact = *std::max_element(impacts.begin(),impacts.end());
+
+    for (size_t i=0; i < impacts.size(); ++i){
+        impacts[i] = impacts[i]/maxImpact;
+    }
+
+    // compute the probability of learning for each agent
+    std::vector<double> probLearning = computeProbLearning(epochNumber, impacts);
+
+    // compute learning status of the agents via probability
+    std::vector<bool> newLearningStatus = computeLearningStatus(probLearning);
+
+    // set the learning status of agents, recording probability of learning and action for all learners
+    setLearningStatus(newLearningStatus, actions, probLearning);
+
+    // update Q tables of learning agents
+    if (learningD){
+        updateQTables(actions, D);
+    }
+    else{
+        updateQTables(actions, G);
+    }
+
+    // save G and/or D for future impact calculation
+    updatePrevG(G);
+
+    if (useD){
+        updatePrevD(D);
+    }
+
 
     // Logs the number of agents learning at each epoch
     int numLearning = logNumLearning(epochNumber);
@@ -992,25 +995,25 @@ void MultiNightBar::setLearningStatus(const std::vector<bool>& newLearningStatus
 
 
 // Updates the Q-Tables of the agents with the same reward (used for Global Reward)
-void MultiNightBar::updateQTables(const std::vector<int>& actions, double reward){
+void MultiNightBar::updateQTables(const std::vector<int>& actions, double reward, bool updateDeltaPi){
 
     for (int i = 0; i < numAgents; ++i){
 
         // if the agent learning, update its Q table
         if (learningStatus[i]){
-            agentVec[i]->updateQTable(actions[i], reward);
+            agentVec[i]->updateQTable(actions[i], reward, updateDeltaPi);
         }
     }
 }
 
 // Updates the Q-Tables of the agents with their personalized reward (used for Difference Rewards)
-void MultiNightBar::updateQTables(const std::vector<int>& actions, const std::vector<double>& rewards){
+void MultiNightBar::updateQTables(const std::vector<int>& actions, const std::vector<double>& rewards, bool updateDeltaPi){
 
     for (int i = 0; i < numAgents; ++i){
 
         // if the agent learning, update its Q table
         if (learningStatus[i]){
-            agentVec[i]->updateQTable(actions[i], rewards[i]);
+            agentVec[i]->updateQTable(actions[i], rewards[i], updateDeltaPi);
         }
     }
 }

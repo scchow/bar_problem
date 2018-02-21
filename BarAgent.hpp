@@ -38,7 +38,7 @@ public:
 
     // updates the q table for a given action, reward pair
     // Also updates the recorded change in Q (ie. deltaPi)
-    void updateQTable(int action, double reward);
+    void updateQTable(int action, double reward, bool updateDeltaPi=true);
 
     // sets the learning rate
     void setLearningRate(double learningRate);

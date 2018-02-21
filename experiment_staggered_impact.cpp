@@ -21,7 +21,7 @@ int main(){
 
 
     std::vector<double> taus = {1.0, 10.0, 100.0, 300.0};
-    int numRuns = 2;
+    int numRuns = 20;
     int numEpochs = 3000;
     std::vector<int> gracePeriods = {10, 50, 100, 500, 1000};
 

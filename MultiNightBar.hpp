@@ -114,10 +114,10 @@ public:
     void setLearningStatus(const std::vector<bool>& learningStatus, const std::vector<int>& actions, const std::vector<double>& probs);
 
     // Updates the Q-Tables of the agents with the same reward (used for Global Reward)
-    void updateQTables(const std::vector<int>& actions, double reward);
+    void updateQTables(const std::vector<int>& actions, double reward, bool updateDeltaPi = true);
 
     // Updates the Q-Tables of the agents with their personalized reward (used for Difference Rewards)
-    void updateQTables(const std::vector<int>& actions, const std::vector<double>& rewards);
+    void updateQTables(const std::vector<int>& actions, const std::vector<double>& rewards, bool updateDeltaPi = true);
 
     // Saves the Previous D values for impact calculation
     void updatePrevD(const std::vector<double>& newD);
