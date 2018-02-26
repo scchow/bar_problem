@@ -70,6 +70,9 @@ public:
     // Impact is normalized before learning status is computed
     void simulateEpochNormImpact(int epochNumber);
 
+    // Simulates a single epoch: agent learning based on reward
+    void simulateEpochReward(int epochNumber);
+
     // Polls each agent for an action. Uses the default exploration rate.
     // For fixed agents, the previous action taken by that agent is used
     std::vector<int> getActions();

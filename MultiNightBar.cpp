@@ -113,6 +113,8 @@ void MultiNightBar::simulateEpoch(int epochNumber, double learnProb){
                 break;
         case 7: simulateEpochNormImpact(epochNumber);
                 break;
+        case 8: simulateEpochReward(epochNumber);
+                break;
     }
 }
 
@@ -730,6 +732,105 @@ void MultiNightBar::simulateEpochNormImpact(int epochNumber){
         updatePrevD(D);
     }
 
+
+    // Logs the number of agents learning at each epoch
+    int numLearning = logNumLearning(epochNumber);
+
+    // Log the performance at each epoch
+    logPerformance(epochNumber, G);
+
+    // Log the learning of each agent
+    logLearningStatus();
+
+    // log the actions of each agent
+    logAgentActions(actions);
+
+    // log the attendance
+    logAttendance(attendance);
+
+    std::cout << "Global Reward = " << G << std::endl;
+
+    std::cout << "NumLearning = " << numLearning << std::endl;
+
+    std::cout << "Attendance = "; 
+    printVector(attendance);
+
+
+    std::cout << "\n";
+}
+
+// Simulates a single epoch: agent learning based on reward
+void MultiNightBar::simulateEpochReward(int epochNumber){
+
+    if (debug)
+    {
+        std::cout << "Computing Reward Run: Epoch " << epochNumber << std::endl;
+    }
+
+    // for the first 10 epochs everyone learns regardless
+    if (epochNumber < graceEpochs){
+        simulateEpochFixed(epochNumber);
+        return;
+    }
+
+    // poll each agent for an action (get previous action for paused agent)
+    std::vector<int> actions = getActions();
+
+    // compute the attendance
+    std::vector<int> attendance = computeAttendance(actions);
+
+    // compute reward per night
+    std::vector<double> rewardPerNight = computeRewardMulti(attendance);
+
+    // compute global reward
+    double G = computeG(rewardPerNight);
+
+    // if necessary compute D
+    std::vector<double> D;
+    if (useD){
+        D = computeD(actions, attendance);
+    }
+
+    if (debug)
+    {
+        std::cout << "G: " << std::to_string(G) << "\n";
+
+        std::cout << "D: \n";
+        printVector(D);
+
+        std::cout << "Prev D: \n";
+        printVector(prevD);
+    }
+
+    // get 10 - D vector for better rewards
+    std::vector<double> invD;
+    for (int i = 0; i < D.size(); ++i){
+        invD.push_back(10 - D[i]);
+    }
+
+    // compute the probability of learning for each agent
+    std::vector<double> probLearning = computeProbLearning(epochNumber, invD);
+
+    // compute learning status of the agents via probability
+    std::vector<bool> newLearningStatus = computeLearningStatus(probLearning);
+
+    // set the learning status of agents, recording probability of learning and action for all learners
+    setLearningStatus(newLearningStatus, actions, probLearning);
+
+    // update Q tables of learning agents
+    if (learningD){
+        updateQTables(actions, D);
+    }
+    else{
+        updateQTables(actions, G);
+    }
+
+    // save G and/or D for future impact calculation
+    updatePrevG(G);
+
+    if (useD){
+        updatePrevD(D);
+    }
 
     // Logs the number of agents learning at each epoch
     int numLearning = logNumLearning(epochNumber);
