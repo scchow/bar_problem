@@ -237,19 +237,21 @@ private:
     std::ofstream qTableFile;
     std::ofstream readmeFile;
     std::ofstream attendanceFile;
+    std::ofstream dFile;
+    // std::ofstream PiFile;
 
 
 };
 
 template <class T>
-void printVector(std::vector<T> v){
+void printVector(std::vector<T> v, std::ostream& output=std::cout){
 
-    std::cout << v[0];
+   output << v[0];
 
     for (size_t i = 1; i < v.size(); ++i){
-        std::cout << ", " << v[i];
+        output << ", " << v[i];
     }
-    std::cout << "\n";
+   output << "\n";
 
 }
 

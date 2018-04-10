@@ -83,6 +83,7 @@ MultiNightBar::~MultiNightBar(){
     agentActionFile.close();
     qTableFile.close();
     readmeFile.close();
+    dFile.close();
 }
 
 // Sets numFixedAgents to not Learning
@@ -785,10 +786,11 @@ void MultiNightBar::simulateEpochReward(int epochNumber){
     // compute global reward
     double G = computeG(rewardPerNight);
 
-    // if necessary compute D
+    // compute difference reward
     std::vector<double> D;
     if (useD){
         D = computeD(actions, attendance);
+        printVector(D, dFile);
     }
 
     if (debug)
@@ -803,13 +805,18 @@ void MultiNightBar::simulateEpochReward(int epochNumber){
     }
 
     // get 10 - D vector for better rewards
-    std::vector<double> invD;
+    // std::vector<double> invD;
+    // for (int i = 0; i < D.size(); ++i){
+    //     invD.push_back(10 - D[i]);
+    // }
+
+    std::vector<double> impacts;
     for (int i = 0; i < D.size(); ++i){
-        invD.push_back(10 - D[i]);
+        impacts.push_back(1.0/std::abs(D[i]));
     }
 
     // compute the probability of learning for each agent
-    std::vector<double> probLearning = computeProbLearning(epochNumber, invD);
+    std::vector<double> probLearning = computeProbLearning(epochNumber, impacts);
 
     // compute learning status of the agents via probability
     std::vector<bool> newLearningStatus = computeLearningStatus(probLearning);
@@ -1144,6 +1151,7 @@ void MultiNightBar::setupLoggers(){
     qTableFile.open(logPath+"qTable.csv");
     readmeFile.open(logPath+"readme.txt");
     attendanceFile.open(logPath+"attendance.csv");
+    dFile.open(logPath+"D_values.csv");
 }
 
 // Logs the number of agents learning at each epoch

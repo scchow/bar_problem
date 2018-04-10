@@ -14,14 +14,14 @@ int main(){
     int runFlag = 8;
     // int tau = 200;
     bool learnTypeD = true;
-    bool impactTypeD = false;
+    bool impactTypeD = true;
     double learningRate = 0.1;
     double exploration = 0.01;
     std::string base_path = "Results/reward_D/";
 
 
-    std::vector<double> taus = {1.0, 2.0, 3.0};
-    int numRuns = 2;
+    std::vector<double> taus = {1.0, 2.0};
+    int numRuns = 20;
     int numEpochs = 3000;
     std::vector<int> gracePeriods = {0, 10, 50, 100};
 
