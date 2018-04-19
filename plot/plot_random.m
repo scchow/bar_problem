@@ -1,4 +1,4 @@
-function plot_fixed(varargin)
+function plot_random(varargin)
 varargin
 numAgents = 100;
 legendLoc = 'SouthEast';
@@ -15,16 +15,16 @@ nights = 10;
 capacity = 10;
 numTrials = 100;
 
-percentFixed = {'0', '20', '50', '70', '90'};
-legendStr = {'100', '80', '50', '30', '10'};
-% percentFixed = {'0', '25', '50', '75', '100', '125'};
-% legendStr = {'150', '125', '100', '75', '50', '25'};
+% percentFixed = {'0', '20', '50', '70', '90'};
+% legendStr = {'100', '80', '50', '30', '10'};
+percentFixed = {'1.000000', '0.900000', '0.700000', '0.500000'};
+legendStr = {'1.0', '0.9', '0.7', '0.5'};
 % percentFixed = {'0'};
 % legendStr = {'100'};
 legendStr = arrayfun(@(x) strcat('$', x,'$'), legendStr);
 
 % On Desktop
-paths = arrayfun(@(x) strcat('../Results/fixed_rerun5/fixedagent_', x),percentFixed);
+paths = arrayfun(@(x) strcat('../Results/random_100/prob_', x,'/grace_0'),percentFixed);
 
 dataDict = containers.Map();
 
@@ -112,7 +112,7 @@ set(gca,'fontname','Times New Roman','FontSize',fs)
 grid on 
 
 xlabel('Epoch', 'FontSize', fs, 'Interpreter', 'latex');
-ylabel('Performance (max 100)', 'FontSize', fs, 'Interpreter', 'latex');
+ylabel('Performance (max 90)', 'FontSize', fs, 'Interpreter', 'latex');
 
 % for i= 1:size(legendStr,2)
 %     legendStr{i} = legendStr{i}{1};
@@ -121,7 +121,7 @@ ylabel('Performance (max 100)', 'FontSize', fs, 'Interpreter', 'latex');
 % legend(sampleHandles, legendStr, 'Location', legendLoc, 'Interpreter', 'latex', 'FontSize', fs);
 
 legendflex(sampleHandles, legendStr, 'anchor', [5, 5], 'buffer', [-5,5], ...
-'Interpreter', 'latex', 'FontSize', fs, 'title', 'Number of Agents Learning');
+'Interpreter', 'latex', 'FontSize', fs, 'title', 'Percentage of Agents Learning');
 % legendStr(sampleHandles, legendStr, 'Location', legendLoc, 'Interpreter', 'latex', 'FontSize', fs);
 ylim([10,100]);
 

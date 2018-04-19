@@ -296,6 +296,12 @@ void MultiNightBar::simulateEpochImpact(int epochNumber){
 // Simulates a single epoch: agent learning based on random prob
 void MultiNightBar::simulateEpochRandom(int epochNumber, double learnProb){
 
+    if (debug)
+    {
+        std::cout << "Computing Random agents learning " << epochNumber << std::endl;
+    }
+
+
     // poll each agent for an action (get previous action for paused agent)
     std::vector<int> actions = getActions();
 
@@ -335,6 +341,33 @@ void MultiNightBar::simulateEpochRandom(int epochNumber, double learnProb){
     if (useD){
         updatePrevD(D);
     }
+
+    // Logs the number of agents learning at each epoch
+    int numLearning = logNumLearning(epochNumber);
+
+    // Log the performance at each epoch
+    logPerformance(epochNumber, G);
+
+    // Log the learning of each agent
+    logLearningStatus();
+
+    // log the actions of each agent
+    logAgentActions(actions);
+
+    // log the attendance
+    logAttendance(attendance);
+
+    std::cout << "Global Reward = " << G << std::endl;
+
+    std::cout << "NumLearning = " << numLearning << std::endl;
+
+    std::cout << "Attendance = "; 
+    printVector(attendance);
+
+
+    std::cout << "\n";
+
+
 }
 
 // Simulates a single epoch: agent learning based on temperature and epoch number
@@ -813,6 +846,7 @@ void MultiNightBar::simulateEpochReward(int epochNumber){
     std::vector<double> impacts;
     for (int i = 0; i < D.size(); ++i){
         impacts.push_back(1.0/std::abs(D[i]));
+        // impacts.push_back(1.0/std::abs(G));
     }
 
     // compute the probability of learning for each agent

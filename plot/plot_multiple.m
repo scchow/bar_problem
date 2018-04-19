@@ -1,4 +1,4 @@
-function plot_fixed(varargin)
+function plot_multiple(varargin)
 varargin
 numAgents = 100;
 legendLoc = 'SouthEast';
@@ -15,23 +15,22 @@ nights = 10;
 capacity = 10;
 numTrials = 100;
 
-percentFixed = {'0', '20', '50', '70', '90'};
-legendStr = {'100', '80', '50', '30', '10'};
-% percentFixed = {'0', '25', '50', '75', '100', '125'};
-% legendStr = {'150', '125', '100', '75', '50', '25'};
-% percentFixed = {'0'};
-% legendStr = {'100'};
-legendStr = arrayfun(@(x) strcat('$', x,'$'), legendStr);
+explorations = {'fixed', '1.000000'};
+legendStr = {'All Agents Learning Simultaneously', 'Probabilistic Learning Agents ($Tau=100$)'}; %Remember to invert tau in formulation
+% legendStr = {'All Agents Learning Simultaneously', 'Probabilistic Learning Agents ($Tau=2$)'}; %Remember to invert tau in formulation
+% legendStr = arrayfun(@(x) strcat('$Tau = ', x,'$'), legendStr);
 
 % On Desktop
-paths = arrayfun(@(x) strcat('../Results/fixed_rerun5/fixedagent_', x),percentFixed);
+paths = {'../Results/fixed_rerun5/fixedagent_0', '../Results/reward_G_100/tau_0.010000/grace_0'};
+% paths = {'../Results/fixed_rerun5/fixedagent_0', '../Results/reward_D_100/tau_0.500000/grace_0'};
 
 dataDict = containers.Map();
 
-csvFname = '/performance.csv';
+% csvFname = '/performance.csv';
+csvFname = '/numLearning.csv';
 
 for i = 1:size(paths,2)
-    exploreRate = percentFixed{i};
+    exploreRate = explorations{i};
 
     path = paths{i};    
     
@@ -70,7 +69,7 @@ fs = 14;
 increment = 20;
 increment1 = 200;
 maxEpoch = 2000;
-dict_keys = percentFixed;
+dict_keys = explorations;
 
 
 plotHandles = zeros(length(dict_keys),1);
@@ -104,30 +103,38 @@ for i = 1:length(dict_keys)
     sampleHandles(i) = errorbar(x_axis(1), y_axis(1), errors(1), ...
         'LineStyle', ls, 'Marker', mkr, 'MarkerFaceColor', c, 'Color', c,'LineWidth', lw);
 end
-
+% 
 % title(strcat('Performance vs Number of Epochs for ', num2str(nights), ...
-%     ' Nights of ', num2str(capacity), ' Capacity with ', num2str(numAgents), ' Adaptive ', 'Agents'));
+%     ' Nights of ', num2str(capacity), ' Capacity with ', num2str(numAgents), ' Adaptive ', 'Agents - Using Function of Epoch Number (Fixed)'));
+
+% title(strcat('Performance vs Number of Epochs - Function of Epoch Number'));
+
 
 set(gca,'fontname','Times New Roman','FontSize',fs)
 grid on 
 
 xlabel('Epoch', 'FontSize', fs, 'Interpreter', 'latex');
-ylabel('Performance (max 100)', 'FontSize', fs, 'Interpreter', 'latex');
+% ylabel('Performance (max 100)', 'FontSize', fs, 'Interpreter', 'latex');
+ylabel('Number Agents Learning (max 100)', 'FontSize', fs, 'Interpreter', 'latex');
 
 % for i= 1:size(legendStr,2)
 %     legendStr{i} = legendStr{i}{1};
 % end
 
-% legend(sampleHandles, legendStr, 'Location', legendLoc, 'Interpreter', 'latex', 'FontSize', fs);
-
-legendflex(sampleHandles, legendStr, 'anchor', [5, 5], 'buffer', [-5,5], ...
-'Interpreter', 'latex', 'FontSize', fs, 'title', 'Number of Agents Learning');
+legend(sampleHandles, legendStr, 'Location', legendLoc, 'Interpreter', 'latex', 'FontSize', fs);
 % legendStr(sampleHandles, legendStr, 'Location', legendLoc, 'Interpreter', 'latex', 'FontSize', fs);
 ylim([10,100]);
 
-% savefig('ea_baseline.fig')
-% export_fig(gcf, 'ea_baseline.pdf', '-trans');
-% 
+% savefig('G_perform_cmp.fig')
+% export_fig(gcf, 'G_perform_cmp.pdf', '-trans');
+savefig('G_numLearn.fig')
+export_fig(gcf, 'G_numLearn.pdf', '-trans');
+
+% savefig('D_perform_cmp.fig')
+% export_fig(gcf, 'D_perform_cmp.pdf', '-trans');
+% savefig('D_numLearn.fig')
+% export_fig(gcf, 'D_numLearn.pdf', '-trans');
+
 % if numAgents == 100
 %     ylabel('Performance (max 100)', 'FontSize', fs, 'Interpreter', 'latex');
 %     savefig('bar_explore_100.fig')

@@ -1,4 +1,4 @@
-function plot_impact_temp(varargin)
+function plot_reward(varargin)
 varargin
 numAgents = 100;
 legendLoc = 'SouthEast';
@@ -9,22 +9,30 @@ elseif length(varargin)==2
     legendLoc = varargin{2};
 end
 
+% If plotPerformance = 1, plot performance
+% Else plot numLearning
+plotPerformance=0;
+
 figure;
 epochs = 3000;
 nights = 10;
 capacity = 10;
-numTrials = 20;
+numTrials = 100;
 
-explorations = {'1.000000', '2.000000'};
-legendStr = {'1', '2'};
+explorations = {'0.100000','0.200000','1.000000','2.000000','5.000000'};
+legendStr = {'10','5','1','0.5','0.2'};
 legendStr = arrayfun(@(x) strcat('$Tau = ', x,'$'), legendStr);
 
 % On Desktop
-paths = arrayfun(@(x) strcat('../Results/reward_D/tau_', x, '/grace_0'),explorations,);
+paths = arrayfun(@(x) strcat('../Results/reward_D_150agents/tau_', x, '/grace_0'),explorations);
 
 dataDict = containers.Map();
 
-csvFname = '/performance.csv';
+if plotPerformance
+    csvFname = '/performance.csv';
+else
+    csvFname = '/numLearning.csv';
+end
 
 for i = 1:size(paths,2)
     exploreRate = explorations{i};
@@ -104,39 +112,60 @@ end
 % title(strcat('Performance vs Number of Epochs for ', num2str(nights), ...
 %     ' Nights of ', num2str(capacity), ' Capacity with ', num2str(numAgents), ' Adaptive ', 'Agents - Using Function of Epoch Number (Fixed)'));
 
-title(strcat('Performance vs Number of Epochs'));
-
+if plotPerformance
+    title(strcat('Performance vs Number of Epochs'));
+else
+    title(strcat('Number Agents Learning vs Number of Epochs'));
+end
 
 set(gca,'fontname','Times New Roman','FontSize',fs)
 grid on 
 
 xlabel('Epoch', 'FontSize', fs, 'Interpreter', 'latex');
-ylabel('Performance (max 100)', 'FontSize', fs, 'Interpreter', 'latex');
 
+if plotPerformance
+    % ylabel('Performance (max 100)', 'FontSize', fs, 'Interpreter', 'latex');
+    ylabel('Performance (max 90)', 'FontSize', fs, 'Interpreter', 'latex');
+else
+    % ylabel('Number Agents Learning (max 100)', 'FontSize', fs, 'Interpreter', 'latex');
+    ylabel('Number Agents Learning (max 150)', 'FontSize', fs, 'Interpreter', 'latex');
+end
 % for i= 1:size(legendStr,2)
 %     legendStr{i} = legendStr{i}{1};
 % end
 
 legend(sampleHandles, legendStr, 'Location', legendLoc, 'Interpreter', 'latex', 'FontSize', fs);
 % legendStr(sampleHandles, legendStr, 'Location', legendLoc, 'Interpreter', 'latex', 'FontSize', fs);
-ylim([10,100]);
-
-if numAgents == 100
-    ylabel('Performance (max 100)', 'FontSize', fs, 'Interpreter', 'latex');
-    savefig('bar_explore_100.fig')
-    export_fig(gcf, 'bar_prob_100agents.pdf', '-trans');
-
-elseif numAgents == 150
-    ylabel('Performance (max 90)', 'FontSize', fs, 'Interpreter', 'latex');
-    savefig('bar_explore_150.fig')
-    export_fig(gcf, 'bar_prob_150agents.pdf', '-trans');
-
-elseif numAgents == 200
-    ylabel('Performance (max 90)', 'FontSize', fs, 'Interpreter', 'latex');
-    savefig('bar_explore_200.fig')
-    export_fig(gcf, 'bar_prob_200agents.pdf', '-trans');
-
+if plotPerformance
+    ylim([10,100]);
 else
-'invalid number of agents, cant export_fig'
+    ylim([10,160]);
 end
+
+if plotPerformance
+    savefig('D_perf_150.fig')
+    export_fig(gcf, 'D_perf_150.pdf', '-trans');
+else
+    savefig('D_numLearn_150.fig')
+    export_fig(gcf, 'D_numLearn_150.pdf', '-trans');
+end
+
+% if numAgents == 100
+%     ylabel('Performance (max 100)', 'FontSize', fs, 'Interpreter', 'latex');
+%     savefig('bar_explore_100.fig')
+%     export_fig(gcf, 'bar_prob_100agents.pdf', '-trans');
+% 
+% elseif numAgents == 150
+%     ylabel('Performance (max 90)', 'FontSize', fs, 'Interpreter', 'latex');
+%     savefig('bar_explore_150.fig')
+%     export_fig(gcf, 'bar_prob_150agents.pdf', '-trans');
+% 
+% elseif numAgents == 200
+%     ylabel('Performance (max 90)', 'FontSize', fs, 'Interpreter', 'latex');
+%     savefig('bar_explore_200.fig')
+%     export_fig(gcf, 'bar_prob_200agents.pdf', '-trans');
+
+% else
+% 'invalid number of agents, cant export_fig'
+% end
 end

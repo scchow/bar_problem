@@ -15,9 +15,10 @@ nights = 10;
 capacity = 10;
 numTrials = 20;
 
-explorations = {'100.000000', '300.000000'};
-legendStr = {'100', '300'};
-legendStr = arrayfun(@(x) strcat('$Tau = ', x,'$'), legendStr);
+explorations = {'300.000000'};
+% legendStr = {'300'};
+% legendStr = arrayfun(@(x) strcat('$Tau = ', x,'$'), legendStr);
+legendStr = {'Probablistic Learning Agents ($Tau = 300$)'};
 
 % On Desktop
 paths = arrayfun(@(x) strcat('../Results/impact_temp_fixed/tau_', x),explorations);
@@ -65,7 +66,7 @@ fs = 14;
 
 increment = 20;
 increment1 = 200;
-maxEpoch = 3000;
+maxEpoch = 2000;
 dict_keys = explorations;
 
 
@@ -90,9 +91,9 @@ for i = 1:length(dict_keys)
 %     hold on
 
     % Plot line
-    ls = linestyles{1 + mod(i, length(linestyles))};
-    c = colors(i,:);
-    mkr = markers(mod(i,length(markers)));
+    ls = linestyles{1 + mod(i+1, length(linestyles))};
+    c = colors(i+1,:);
+    mkr = markers(mod(i+1,length(markers)));
     plotHandles(i) = plot(epochs, means, 'LineStyle', ls, 'LineWidth', lw, 'Color', c);
     hold on
     errHandles(i) = errorbar(x_axis, y_axis, errors, ...
@@ -104,7 +105,7 @@ end
 % title(strcat('Performance vs Number of Epochs for ', num2str(nights), ...
 %     ' Nights of ', num2str(capacity), ' Capacity with ', num2str(numAgents), ' Adaptive ', 'Agents - Using Function of Epoch Number (Fixed)'));
 
-title(strcat('Number Agents Learning vs Epochs - Function of Epoch Number (Fixed)'));
+% title(strcat('Number Agents Learning vs Epochs - Function of Epoch Number (Fixed)'));
 
 
 set(gca,'fontname','Times New Roman','FontSize',fs)
@@ -120,6 +121,10 @@ ylabel('Number Agents Learning (max 100)', 'FontSize', fs, 'Interpreter', 'latex
 legend(sampleHandles, legendStr, 'Location', legendLoc, 'Interpreter', 'latex', 'FontSize', fs);
 % legendStr(sampleHandles, legendStr, 'Location', legendLoc, 'Interpreter', 'latex', 'FontSize', fs);
 ylim([10,100]);
+
+savefig('ea_numLearning.fig')
+export_fig(gcf, 'ea_numLearning.pdf', '-trans');
+
 % 
 % if numAgents == 100
 %     ylabel('Performance (max 100)', 'FontSize', fs, 'Interpreter', 'latex');

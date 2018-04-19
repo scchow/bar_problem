@@ -8,7 +8,7 @@ int main(){
 
     std::cout << "MultiNightBar Experiment" << std::endl;
 
-    int nAgents = 100;
+    int nAgents = 150;
     int nNights = 10;
     int cap = 10;
     int runFlag = 1;
@@ -17,11 +17,11 @@ int main(){
     bool impactTypeD = true;
     double learningRate = 0.1;
     double exploration = 0.01;
-    std::string base_path = "Results/fixed/";
+    std::string base_path = "Results/fixed_150/";
 
 
-    std::vector<int> fixedAgent = {0, 20, 50, 70, 90};
-    int numRuns = 20;
+    std::vector<int> fixedAgent = {0,25,50,75,100,125};
+    int numRuns = 100;
     int numEpochs = 3000;
 
     for (size_t i = 0; i < fixedAgent.size(); ++i){
